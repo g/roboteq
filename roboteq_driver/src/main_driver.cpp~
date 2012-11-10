@@ -1,6 +1,6 @@
 #include "ros/ros.h"
-#include "thortemp/main_driver.h"
-#include "thortemp/roboteq.h"
+#include "roboteq/main_driver.h"
+#include "roboteq/roboteq.h"
 #include "geometry_msgs/Twist.h"
 
 

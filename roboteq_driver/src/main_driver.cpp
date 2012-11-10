@@ -43,7 +43,7 @@ void test_function(const ros::TimerEvent&)
 
 */
 globali++;
-	motor_controller_FR->setVAR(1, globali);
+	//motor_controller_FR->setVAR(1, globali);
 
 
 }
