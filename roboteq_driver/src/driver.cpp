@@ -27,7 +27,7 @@ void request_status(const ros::TimerEvent&)
 
 
 class Callbacks : public roboteq::Callbacks {
-  public:
+  protected:
     void voltages(float drive, float battery, float analog) {
 	    ROS_INFO("Motor Drive voltage %f  Bat Voltage %f analog Voltage %f",
                 drive, battery, analog);

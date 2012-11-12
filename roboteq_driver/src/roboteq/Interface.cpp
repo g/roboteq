@@ -215,67 +215,10 @@ bool Interface::sendRuntimeCommand(string strCommand)
 	}
 }
 
-//RuntimeCommand
-/*bool Interface::sendRuntimeQuery(string strQuery, string *response)
-{
-
-	//string[] result;
-	string InterfaceResponse="";
-	string command_Readback="";
-	char byteRead=0;
-	int i=0,nextLoc=0;
-
-	if (controllerPort->write_block(strQuery.c_str(),strQuery.length())) {
-		while ((int)byteRead!=ASCII_CR_CODE)
-		{	
-			usleep(100);
-
-			if (controllerPort->read(&byteRead)) {
-				command_Readback += byteRead;
-			}
-		}
-		byteRead=0;
-		while ((int)byteRead!=ASCII_CR_CODE)
-		{	
-			usleep(100);
-			if (controllerPort->read(&byteRead)) {
-				InterfaceResponse += byteRead;
-			}
-		}
-
-		
-		if (InterfaceResponse[0]!='-')
-		{
-			
-			//ROS_INFO("CONTROL: Query ACKED send> %s : response:>%s",strQuery.c_str(),InterfaceResponse.c_str());
-			InterfaceResponse=InterfaceResponse.substr(InterfaceResponse.find("=")+1);
-			while (nextLoc!=string::npos)
-			{
-				nextLoc=InterfaceResponse.find(":");
-				//ROS_INFO("for %d got:%s \n",i,InterfaceResponse.substr(0,nextLoc).c_str());
-				response[i++]=InterfaceResponse.substr(0,nextLoc).c_str();
-				InterfaceResponse=InterfaceResponse.substr(nextLoc+1);
-			}
-
-			return 0;
-		}
-		else
-		{
-			ROS_INFO("CONTROL: Query error- send> %s : response:>%s",strQuery.c_str(),InterfaceResponse.c_str());		
-			return -1;
-		}
-	}
-	else
-	{
-		ROS_INFO("CONTROL: Query send error");
-		return -1;
-	}
-}*///RuntimeQuery
-
 bool Interface::sendSerial(string strQuery)
 {
 	if (controllerPort->write_block(strQuery.c_str(),strQuery.length())) {
-	
+		ROS_INFO("Sent %s",strQuery.c_str());
 		return true;
 	}
 	else
@@ -298,7 +241,7 @@ void Interface::readserialbuss()
 		//nothing to read exit the function.
 		return;
 	}
-
+	
 	byteRead=0;
 	while ((int)byteRead!=ASCII_CR_CODE)
 	{	
@@ -310,7 +253,21 @@ void Interface::readserialbuss()
 				response += byteRead;
 			}
 		}
-    }
+    	}
+	response="";
+	byteRead=0;
+	while ((int)byteRead!=ASCII_CR_CODE)
+	{	
+		if (controllerPort->read(&byteRead)) {
+			response += byteRead;
+		}else{
+			usleep(100);
+			if (controllerPort->read(&byteRead)) {
+				response += byteRead;
+			}
+		}
+    	}
+	ROS_INFO("CONTROL: Query go-response:>%s", response.c_str());
 
 	if (response[0] == '-')
 	{

@@ -1,18 +1,18 @@
 
 #include "roboteq/Callbacks.h"
 #include <stdlib.h>
-
+#include "ros/ros.h"
 
 namespace roboteq {
 
 
 bool Callbacks::handle(string response)
 {  
-    // ROS_DEBUG("Response: %s", response.c_str());
+     ROS_INFO("Response: %s", response.c_str());
 
     uint8_t equals_sign = response.find("=");
     string code = response.substr(0, equals_sign);
-    // ROS_DEBUG("  code = %s \n", code);
+     ROS_INFO("  code = %s \n", code.c_str());
 
     // Split up response into multiple fields. 
     response = response.substr(equals_sign + 1);
@@ -23,7 +23,7 @@ bool Callbacks::handle(string response)
     {
         delimiter = response.find(":");
         string field = response.substr(0, delimiter).c_str();
-        // ROS_DEBUG("  field[%d] = %s \n", i, field);
+         ROS_INFO("  field[%d] = %s \n", i, field.c_str());
         fields[i++] = field;
         response = response.substr(delimiter + 1);
     }
