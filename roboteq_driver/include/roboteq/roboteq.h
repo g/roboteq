@@ -78,13 +78,8 @@ class roboteq {
 		
 	
 	bool sendRuntimeCommand(string strCommand);
-	bool sendRuntimeQuery(string strQuery);
-	pthread_t read_thread_;
+	bool SendSerial(string strQuery);
 	LightweightSerial *controllerPort;
-
-	bool (roboteq::*callback[20])(string *data);
-	int callbackstackpointer;//id of the end of the que, its size.
-	bool is_callback_locked_;
 
 	bool runCallback(string *data);
 	bool addCallback(bool (*func)(void));

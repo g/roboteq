@@ -108,8 +108,11 @@ int main(int argc, char **argv)
 	ros::Timer timer = n.createTimer(ros::Duration(.015), test_function);
 	ros::Timer timer2 = n.createTimer(ros::Duration(.5), test_function2);
 	//ros::Timer timer3 = n.createTimer(ros::Duration(2), test_function2);
-
-	ros::spin();
+	while (true)
+	{
+		ros::spinOnce();
+		motor_controller_FR->readserialbuss();
+	}
 
 	return 0;
 }

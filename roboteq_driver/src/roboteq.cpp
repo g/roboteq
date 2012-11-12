@@ -1,7 +1,7 @@
 #include "roboteq/roboteq.h"
 
 bool setup_controllers();
-//bool sendRuntimeQuery(string strQuery, string *response);
+//bool SendSerial(string strQuery, string *response);
 
 
 double last_path_error_callback=0;
@@ -87,49 +87,6 @@ double last_path_error_callback=0;
 */
 
 
-
-
-
-
-/*void path_tracker()
-{
-	double omega=0;
-	double motor1speed=0;
-	double motor2speed=0;
-	double reqd_r_wheelspeed=0;
-	double reqd_l_wheelspeed=0;
-	k_cntrl = 2;
-	k_yaw = 2.5; //1.5
-
-	if (!auto_velControl)
-		reqd_vel=REQD_VX;
-
-//	reqd_vel=0;
-//	omega=-0.5;	
-//	reqd_vel=0;
-
-
-	omega = k_yaw*yaw_e + atan2(k_cntrl*cross_e,reqd_vel);
-	reqd_r_wheelspeed = (reqd_vel + c*omega)/r;
-	reqd_l_wheelspeed = (reqd_vel - c*omega)/r;
-
-	ROS_INFO("CONTROL:cross track:%f   heading_error:%f    calculated omega:%f",cross_e,yaw_e,omega);
-
-	motor1speed = reqd_l_wheelspeed/(enc_wheel_rev*2*pi/60);
-	motor2speed = reqd_r_wheelspeed/(enc_wheel_rev*2*pi/60);
-
-	//Single Motor Controller
-//	motor_controller_1->Motor2Speed = motor1speed;
-//	motor_controller_1->Motor1Speed = -1*motor2speed;
-
-	//Double Motor Controller
-	motor_controller_1->Motor1Speed = M1_MULT*motor1speed;
-	motor_controller_1->Motor2Speed = M1_MULT*motor1speed;
-	motor_controller_2->Motor1Speed = M2_MULT*motor2speed;
-	motor_controller_2->Motor2Speed = M2_MULT*motor2speed;
-	
-}*/
-
 bool setup_controllers()
 {
 /*	roboteq *temp;
@@ -197,7 +154,7 @@ roboteq::roboteq ()
 	com_status_ = 0;
 	motor_speed_[0]=0;
 	motor_speed_[1]=0;
-	callbackstackpointer=0;
+
 }
 
 roboteq::roboteq (const char *port, int baud) 
@@ -206,7 +163,7 @@ roboteq::roboteq (const char *port, int baud)
 	controller_baud_ = baud;
 	com_status_ = FALSE; //BAD
 	version="";
-	callbackstackpointer=0;
+
 }
 
 
@@ -225,8 +182,6 @@ bool roboteq::setupComm()
 	
 	controllerPort = new LightweightSerial(serialPort,controller_baud_);
 
-	
-	
 	while(tries<2) {
 		if (controllerPort->write_block("?FID\r",5)) {
 		
@@ -255,10 +210,7 @@ bool roboteq::setupComm()
 						version_Readback += byteRead;
 				}
 			}
-			ROS_INFO("CONTROL: Version recieved-->%s",version_Readback.c_str());
-			ROS_INFO("CONTROL: Starting Reader thread");
-			startInternalThread();
-			
+			ROS_INFO("CONTROL: Version recieved-->%s",version_Readback.c_str());	
 		}	
 		else {
 			ROS_INFO("CONTROL: could not write to roboteq");
@@ -295,42 +247,8 @@ bool roboteq::setMotorSpeeds()
 	m1_string << motor_speed_[0];
 	m2_string << motor_speed_[0];
 	motor_command = "!M " + m1_string.str() + " " + m2_string.str() + "\r";
-	return sendRuntimeCommand(motor_command);
+	return SendSerial(motor_command);
 
-/*
-	if (controllerPort->write_block(motor_command.c_str(),motor_command.length())) {
-		while ((int)byteRead!=ASCII_CR_CODE)
-		{	
-			usleep(100);
-
-			if (controllerPort->read(&byteRead)) {
-				command_Readback += byteRead;
-			}
-		}
-		byteRead=0;
-		while ((int)byteRead!=ASCII_CR_CODE)
-		{	
-			usleep(100);
-			if (controllerPort->read(&byteRead)) {
-				ack += byteRead;
-			}
-		}
-
-		//if (!ack.compare("+"))
-		//	ROS_INFO("CONTROL: Motor command receive error");		
-
-		
-		if (ack.compare("+"))
-			ROS_INFO("CONTROL: MOTOR COMMAND ACKED -> %s",motor_command.c_str());
-		else
-			ROS_INFO("CONTROL: Motor command receive error");		
-	}
-	else
-	{
-		ROS_INFO("CONTROL: Motor command send error");
-	}
-
-	return 0;*/
 }
 
 
@@ -375,15 +293,12 @@ bool roboteq::getMotorCurrent()
 {
 
 	//addCallback(&roboteq::decodeMotorCurrent);
-	while(is_callback_locked_);
-	callback[callbackstackpointer]=&roboteq::decodeMotorCurrent;
-	callbackstackpointer++;
-	if(sendRuntimeQuery("?A\r")==true)
+
+	if(SendSerial("?A\r")==true)
 	{
 		return true;	
 	}
 	else {
-		callbackstackpointer--;
 		ROS_INFO("CONTROL: Can't get Motor currents failed to send command");
 		return false;
 	}
@@ -392,15 +307,11 @@ bool roboteq::getMotorCurrent()
 
 bool roboteq::getBatCurrent()
 {
-	while(is_callback_locked_);
-	callback[callbackstackpointer]=&roboteq::decodeBatCurrent;
-	callbackstackpointer++;
-	if(sendRuntimeQuery("?BA\r")==true)
+	if(SendSerial("?BA\r")==true)
 	{
 		return true;	
 	}
 	else {
-		callbackstackpointer--;
 		ROS_INFO("CONTROL: Can't get Motor currents failed to send command");
 		return false;
 	}
@@ -410,22 +321,17 @@ bool roboteq::getBatCurrent()
 bool roboteq::getVoltages()
 {
 
-	while(is_callback_locked_);
-	callback[callbackstackpointer]=&roboteq::decodeVoltage;
-	callbackstackpointer++;
-
-	if(sendRuntimeQuery("?V\r")==true)
+	if(SendSerial("?V\r")==true)
 	{
 		return true;
 	}
 	else{
-		callbackstackpointer--;
 		ROS_INFO("CONTROL: Can't get Motor and Bat Voltages failed to send command");		
 		return false;
 	}		
 }
 
-bool roboteq::sendRuntimeCommand(string strCommand)
+bool roboteq::SendSerial(string strCommand)
 {
 
 	string ack="";
@@ -570,63 +476,9 @@ bool roboteq::decodeMotorSetpoint(string *value)
 		
 	return true;		
 }
-/*bool roboteq::sendRuntimeQuery(string strQuery, string *response)
-{
 
-	//string[] result;
-	string roboteqResponse="";
-	string command_Readback="";
-	char byteRead=0;
-	int i=0,nextLoc=0;
 
-	if (controllerPort->write_block(strQuery.c_str(),strQuery.length())) {
-		while ((int)byteRead!=ASCII_CR_CODE)
-		{	
-			usleep(100);
-
-			if (controllerPort->read(&byteRead)) {
-				command_Readback += byteRead;
-			}
-		}
-		byteRead=0;
-		while ((int)byteRead!=ASCII_CR_CODE)
-		{	
-			usleep(100);
-			if (controllerPort->read(&byteRead)) {
-				roboteqResponse += byteRead;
-			}
-		}
-
-		
-		if (roboteqResponse[0]!='-')
-		{
-			
-			//ROS_INFO("CONTROL: Query ACKED send> %s : response:>%s",strQuery.c_str(),roboteqResponse.c_str());
-			roboteqResponse=roboteqResponse.substr(roboteqResponse.find("=")+1);
-			while (nextLoc!=string::npos)
-			{
-				nextLoc=roboteqResponse.find(":");
-				//ROS_INFO("for %d got:%s \n",i,roboteqResponse.substr(0,nextLoc).c_str());
-				response[i++]=roboteqResponse.substr(0,nextLoc).c_str();
-				roboteqResponse=roboteqResponse.substr(nextLoc+1);
-			}
-
-			return 0;
-		}
-		else
-		{
-			ROS_INFO("CONTROL: Query error- send> %s : response:>%s",strQuery.c_str(),roboteqResponse.c_str());		
-			return -1;
-		}
-	}
-	else
-	{
-		ROS_INFO("CONTROL: Query send error");
-		return -1;
-	}
-}*///RuntimeQuery
-
-bool roboteq::sendRuntimeQuery(string strQuery)
+bool roboteq::SendSerial(string strQuery)
 {
 	if (controllerPort->write_block(strQuery.c_str(),strQuery.length())) {
 	
@@ -647,143 +499,64 @@ void roboteq::readserialbuss()
 	string command_Readback="";
 	char byteRead=0;
 	int nextLoc=0,i=0;	
+	//ROS_INFO("readthread got: %s !!!!: ","ahh");
 
-	//try waiting and writing back 
-	while (1)
+	if (controllerPort->read(&byteRead)) {
+		command_Readback += byteRead;
+	}else{
+		//nothing to read exit the function.
+		return;
+	}
+
+	while ((int)byteRead!=ASCII_CR_CODE)
+	{	
+		if (controllerPort->read(&byteRead)) {
+			command_Readback += byteRead;
+		}
+		usleep(100);	
+	}
+	//ROS_INFO("Command readback got:%s \n",Readback.substr(0,nextLoc).c_str());
+	byteRead=0;
+	while ((int)byteRead!=ASCII_CR_CODE)
+	{	
+		if (controllerPort->read(&byteRead)) {
+			roboteqResponse += byteRead;
+		}else{
+			usleep(100);
+		}
+	}
+	if (roboteqResponse[0]!='-')
 	{
-		byteRead=0;
-		roboteqResponse="";
-				
-		for (i=0;i<20;i++)
-		{
-			response[i]="-1";
-		}
-
-
-		//ROS_INFO("readthread got: %s !!!!: ","ahh");
 	
-		while ((int)byteRead!=ASCII_CR_CODE)
-		{	
-			usleep(100);
-
-			if (controllerPort->read(&byteRead)) {
-				command_Readback += byteRead;
-			}
-		}
-		//ROS_INFO("Command readback got:%s \n",Readback.substr(0,nextLoc).c_str());
-		byteRead=0;
-		while ((int)byteRead!=ASCII_CR_CODE)
-		{	
-			usleep(100);
-			if (controllerPort->read(&byteRead)) {
-				roboteqResponse += byteRead;
-			}
-		}
-		if (roboteqResponse[0]!='-')
+		if (roboteqResponse[0]!='+')
 		{
+
+		//Send serial response to secondary data thread.
 		
-			if (roboteqResponse[0]!='+')
-			{
-				nextLoc=0;
-				i=0;
-			
-					//ROS_INFO("CONTROL: Query ACKED send>  response:>%s",roboteqResponse.c_str());
-					roboteqResponse=roboteqResponse.substr(roboteqResponse.find("=")+1);
-					while (nextLoc!=string::npos)
-					{
-						nextLoc=roboteqResponse.find(":");
-						//ROS_INFO("for %d got:%s \n",i,roboteqResponse.substr(0,nextLoc).c_str());
-						response[i++]=roboteqResponse.substr(0,nextLoc).c_str();
-						roboteqResponse=roboteqResponse.substr(nextLoc+1);
-					}
-
-					//send data to callback
-					//exicute callback from pointer array.
-			
-					//(this->*callback[0])(response);
-					runCallback(response);
-			}else{
-				//it was a command response send ok.
-				//ROS_INFO("CONTROL: Query ACKED send>  response:>%s",roboteqResponse.c_str());
-				response[0]='1';
-				runCallback(response);
-			}
-
+		ROS_INFO("CONTROL: Query ACKED send>  response:>%s",roboteqResponse.c_str());
 			
 		}else{
-			ROS_INFO("CONTROL: Query error-response:>%s",roboteqResponse.c_str());		
-			//return -1;
+			//it was a command response do nothing. ok.
+			//ROS_INFO("CONTROL: Query ACKED send>  response:>%s",roboteqResponse.c_str());
+
+
 		}
-		//ROS_INFO("readthread got: %s !!!!: Query send error",roboteqResponse.c_str());
-	}	//return NULL;
-	return;
-}
-/*static void *readserialLaunch(void *context)
-{
-	return((roboteq*)context)->readserialbuss(NULL);
-}*/
-	//bool runCallback(string *data);
-	//bool addCallback(void (*func)(void));
 
-bool roboteq::addCallback(bool (*func)(void))
-{
-
-//	ROS_INFO("CONTROL: added callback @ postion %d",callbackstackpointer);
-//	callback[callbackstackpointer]=&roboteq::func;
-//	callbackstackpointer++;
-
-return true;
-}//addcallback
-
-bool roboteq::runCallback(string *data)
-{
-	int i;
-	is_callback_locked_=true;
-//	ROS_INFO("CONTROL: stat is %s %s %s",data[0].c_str(),data[1].c_str(),data[2].c_str());
-	if (callbackstackpointer>0)
-	{
-	//	ROS_INFO("CONTROL: running function at location 0 stackpointer is at %d",callbackstackpointer);
-		//assuming we get serial data in order.
-		(this->*callback[0])(data);
-
-		for (i=0;i<callbackstackpointer-1;i++)
-		{
-			//ROS_INFO("CONTROL: Moviing func from  %d to %d ",i+1,i);
-			callback[i]=callback[i+1];
-		}
-		//remove the last value coppied from the que.	
-		callback[i]=NULL;
-		callbackstackpointer--;
-		is_callback_locked_=false;
-		return true;
+		
 	}else{
-		ROS_INFO("CONTROL: error in callback function callback does not exists!! pointer at %d",callbackstackpointer);
-		is_callback_locked_=false;		
-	return false;
+		ROS_INFO("CONTROL: Query error response was:%s",roboteqResponse.c_str());		
+		//return -1;
 	}
-}//runcallback
-
-
-bool roboteq::startInternalThread()
-{
-	return(pthread_create(&read_thread_,NULL,InternalThreadEntryFunc,this)==0);//(roboteq*)context)->readserialbuss(NULL);
-}
-
-static void *InternalThreadEntryFunc(void * This) 
-{
-	((roboteq *)This)->readserialbuss(); 
-	return NULL;
 }
 
 //Runtime Commands
 bool roboteq::resetDIOx(int i)
 {
-//need to redo this one
 	string strCommand;
 	stringstream stringID;
 	stringID << i;
 	 strCommand="!D0 " + stringID.str() +"\r";
-	return sendRuntimeCommand(strCommand);
+	return SendSerial(strCommand);
 }//resetDIO
 
 bool roboteq::setDIOx(int i)	
@@ -793,7 +566,7 @@ bool roboteq::setDIOx(int i)
 	stringstream stringID;
 	stringID << i;
 	strCommand="!D1 " + stringID.str() +"\r";
-	return sendRuntimeCommand(strCommand);
+	return SendSerial(strCommand);
 }//setDIO
 
 bool roboteq::setSetpoint(int motor,int val)
@@ -805,7 +578,7 @@ bool roboteq::setSetpoint(int motor,int val)
 	stringMotor << motor;
 	stringVal << val;
 	strCommand="!G " + stringMotor.str() + " " + stringVal.str() +"\r";
-	return sendRuntimeCommand(strCommand);
+	return SendSerial(strCommand);
 }//setSetpoint
 
 bool roboteq::setSetpoint(int val)
@@ -815,22 +588,16 @@ bool roboteq::setSetpoint(int val)
 	stringstream stringVal;
 	stringVal << val;
 	strCommand="!G " + stringVal.str() +"\r";
-	while(is_callback_locked_);
-	callback[callbackstackpointer]=&roboteq::decodeMotorSetpoint;
-	callbackstackpointer++;
-	if(sendRuntimeQuery(strCommand)==true)
+	if(SendSerial(strCommand)==true)
 	{
 		return true;	
 	}
 	else {
-		callbackstackpointer--;
 		ROS_INFO("CONTROL: Can't Set Motor Setpoint failed to send command");
 		return false;
 	}
 
-
-
-return sendRuntimeQuery(strCommand);
+return SendSerial(strCommand);
 }//setSetpoint
 
 bool roboteq::setEstop()
@@ -838,7 +605,7 @@ bool roboteq::setEstop()
 //need to redo this one
 	string strCommand;
 	strCommand="!EX \r";
-	return sendRuntimeCommand(strCommand);
+	return SendSerial(strCommand);
 }//setEstop
 
 bool roboteq::resetEstop()
@@ -846,7 +613,7 @@ bool roboteq::resetEstop()
 //need to redo this one
 	string strCommand;
 	strCommand="!MG \r";
-	return sendRuntimeCommand(strCommand);
+	return SendSerial(strCommand);
 }
 
 bool roboteq::setVAR(int i, int val)
@@ -858,7 +625,7 @@ bool roboteq::setVAR(int i, int val)
 	stringID << i;
 	stringVal << val;
 	strCommand="!VAR " + stringID.str() + " " + stringVal.str() +"\r";
-	return sendRuntimeCommand(strCommand);
+	return SendSerial(strCommand);
 }//setVAR
 
 
@@ -871,7 +638,7 @@ int roboteq::readVAR(int i)
 	string stringVal;
 	stringID << i;
 	strQuery="?VAR " + stringID.str() +"\r";
-	if(sendRuntimeQuery(strQuery)==0)
+	if(SendSerial(strQuery)==0)
 	{
 		//ROS_INFO("String Val %d: %s",i,stringVal.c_str());
 	//	return atoi(qryResponse[i].c_str());
@@ -888,7 +655,7 @@ bool roboteq::getClosedLoopError()
 //need to do this one
 
 
-	if(sendRuntimeQuery("?E\r")==true)
+	if(SendSerial("?E\r")==true)
 	{
 
 	//	closedLoopErr = atof(Error.c_str());
@@ -906,19 +673,12 @@ bool roboteq::getClosedLoopError()
 	
 bool roboteq::getMotorCommanded()
 {
-
-	while(is_callback_locked_);
-	callback[callbackstackpointer]=&roboteq::decodeCommanded;
-	callbackstackpointer++;
-
-	if(sendRuntimeQuery("?M\r")==true)
+	if(SendSerial("?M\r")==true)
 	{
 		return true;
 	}
 	else
 		ROS_INFO("CONTROL: Can't get Motor Commanded failed to send command");
-		
-		callbackstackpointer--;
 		return false;
 
 }//get motor commanded
@@ -929,14 +689,8 @@ bool roboteq::getEncoderCount()
 	//need to do this one
 
 
-	if(sendRuntimeQuery("?C\r")==true)
+	if(SendSerial("?C\r")==true)
 	{
-
-		//encoderCount[0] = atol(EncoderCountValues[0].c_str());
-		//encoderCount[1] = atol(EncoderCountValues[1].c_str());
-		
-		//ROS_INFO("Motor Encoders to: 1: %f,2: %f",EncoderCountValues[0],EncoderCountValues[1]);
-
 		return true;
 	}
 	else
@@ -947,27 +701,19 @@ bool roboteq::getEncoderCount()
 
 bool roboteq::getMotorRPM()
 {
-	while(is_callback_locked_);
-	callback[callbackstackpointer]=&roboteq::decodeMotorRPM;
-	callbackstackpointer++;
 
-	if(sendRuntimeQuery("?S\r")==true)
+	if(SendSerial("?S\r")==true)
 	{
 		return true;
 	}else{
-		callbackstackpointer--;
 		return false;
 	}
 }//get motor RPM
 
 bool roboteq::getMotorPower()
 {
-	
-	while(is_callback_locked_);
-	callback[callbackstackpointer]=&roboteq::decodeMotorPower;
-	callbackstackpointer++;
 
-	if(sendRuntimeQuery("?P\r")==0)
+	if(SendSerial("?P\r")==0)
 	{
 		return true;
 	}
@@ -983,7 +729,7 @@ bool roboteq::getFault()
 {
 	
 
-	if(sendRuntimeQuery("?S\r")==0)
+	if(SendSerial("?S\r")==0)
 	{
 
 		return true;
