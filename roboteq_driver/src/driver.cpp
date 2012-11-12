@@ -1,8 +1,11 @@
-#include "ros/ros.h"
 #include "roboteq/Interface.h"
 #include "roboteq/Callbacks.h"
 #include "roboteq/exceptions.h"
-#include "geometry_msgs/Twist.h"
+
+#include "ros/ros.h"
+#include "roboteq_msgs/Command.h"
+#include "roboteq_msgs/Status.h"
+#include "roboteq_msgs/Feedback.h"
 
 
 roboteq::Interface* controller;
@@ -25,6 +28,12 @@ void request_status(const ros::TimerEvent&)
     }
 }
 
+void command_callback(const roboteq_msgs::Command& command)
+{
+
+
+}
+
 
 class Callbacks : public roboteq::Callbacks {
   private:
@@ -37,6 +46,10 @@ class Callbacks : public roboteq::Callbacks {
 	    ROS_INFO("Motor Drive Current 1: %f\t2: %f ",
                current_1, current_2);
     }
+
+  public:
+    roboteq_msgs::Feedback feedback;
+    roboteq_msgs::Status status;
 };
 
 
