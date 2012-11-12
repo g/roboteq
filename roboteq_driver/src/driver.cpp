@@ -4,20 +4,15 @@
 #include "geometry_msgs/Twist.h"
 
 
-#define LIN_MAX 1000
-#define ANG_MAX 1000
-#define l 2	//need to put the real value here.
-
-
 roboteq::Interface* controller;
 
 void request_feedback(const ros::TimerEvent&)
 {
 	controller->getMotorCurrent();
-	/*controller->getBatCurrent();
+	controller->getBatteryCurrent();
 	controller->getMotorCommanded();
 	controller->getMotorRPM();
-	controller->getMotorPower();*/
+	controller->getMotorPower();
 }
 
 void request_status(const ros::TimerEvent&)
@@ -27,7 +22,7 @@ void request_status(const ros::TimerEvent&)
 
 
 class Callbacks : public roboteq::Callbacks {
-  protected:
+  private:
     void voltages(float drive, float battery, float analog) {
 	    ROS_INFO("Motor Drive voltage %f  Bat Voltage %f analog Voltage %f",
                 drive, battery, analog);
@@ -66,7 +61,7 @@ int main(int argc, char **argv)
 	//roboteq* motor_controller_RR = new roboteq("/dev/ttyACM2", 115200);  // Front right controller
 	//roboteq* motor_controller_RL = new roboteq("/dev/ttyACM3", 115200);  // Front right controller
 	
-	controller->setupComm();
+	controller->connect();
 
     // 50 Hz timer for Feedback data.
 	ros::Timer timer_feedback = n.createTimer(ros::Duration(0.02), request_feedback);
@@ -77,7 +72,7 @@ int main(int argc, char **argv)
     while (true)
 	{
 		ros::spinOnce();
-		controller->readserialbuss();
+		controller->spinOnce();
         usleep(100);
 	}
 

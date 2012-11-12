@@ -10,9 +10,13 @@ bool Callbacks::handle(string response)
 {  
      ROS_INFO("Response: %s", response.c_str());
 
-    uint8_t equals_sign = response.find("=");
+    size_t equals_sign = response.find("=");
+    if (equals_sign == string::npos)
+    {
+        // Line which includes no data.
+        return false;
+    }
     string code = response.substr(0, equals_sign);
-     ROS_INFO("  code = %s \n", code.c_str());
 
     // Split up response into multiple fields. 
     response = response.substr(equals_sign + 1);

@@ -3,34 +3,35 @@
 
 #include <stdint.h>
 #include <string>
+#include <roboteq/exceptions.h>
 
 using namespace std;
 
 namespace roboteq {
 
-class NoHandler : public exception
-{
-};
-
 class Callbacks
 {
-  public:
-    bool handle(string);
-
-  protected:
+  private:
     virtual void motorCurrent(float current_1, float current_2) { throw NoHandler(); }
-    void batteryCurrent(float battery) { throw NoHandler(); }
-    void closedLoopError(uint8_t error) { throw NoHandler(); }
-    void motorCommanded(float commanded_1, float commanded_2) { throw NoHandler(); }
-    void encoderCount(uint32_t ticks_1, uint32_t ticks_2) { throw NoHandler(); }
-    void motorRPM(uint32_t rpm_1, uint32_t rpm_2) { throw NoHandler(); }
-    void motorPower(float power_1, float power_2) { throw NoHandler(); }
+    virtual void batteryCurrent(float battery) { throw NoHandler(); }
+    virtual void closedLoopError(uint8_t error) { throw NoHandler(); }
+    virtual void motorCommanded(float commanded_1, float commanded_2) { throw NoHandler(); }
+    virtual void encoderCount(uint32_t ticks_1, uint32_t ticks_2) { throw NoHandler(); }
+    virtual void motorRPM(uint32_t rpm_1, uint32_t rpm_2) { throw NoHandler(); }
+    virtual void motorPower(float power_1, float power_2) { throw NoHandler(); }
     virtual void voltages(float drive, float battery, float analog) { throw NoHandler(); }
 
-  private:
+    /*virtual void logdebug(string s);
+    virtual void loginfo(string s);
+    virtual void logwarn(string s);*/
+
+    // Internal helper functions
     bool call(string code, string fields[]);
     static float to_float(string field, float scale=0.1);
     static int32_t to_int(string field);
+
+  public:
+    bool handle(string);
 };
 
 }
