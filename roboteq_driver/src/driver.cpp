@@ -34,23 +34,12 @@ void setMotorSpeedsFromControler(const geometry_msgs::Twist::ConstPtr& msg)
 
 void test_function(const ros::TimerEvent&)
 {
-	//ROS_INFO("Getting Voltages");
 	controller->getVoltages();
 	controller->getMotorCurrent();
 	controller->getBatCurrent();
 	controller->getMotorCommanded();
 	controller->getMotorRPM();
 	controller->getMotorPower();
-	
-
-
-/*motor_controller_FR->getVoltages();
-motor_controller_FR->getVoltages();
-motor_controller_FR->getVoltages();
-motor_controller_FR->getVoltages();
-
-*/	
-	//ROS_INFO("Getting Current");
 	
 	/*ROS_INFO("Motor Drive Current 1: %f\t2: %f ",motor_controller_FR->motor_current_[0],motor_controller_FR->motor_current_[1]);
 	ROS_INFO("Motor Drive voltage %f  Bat Voltage %f analog Voltage %f",motor_controller_FR->drive_voltage,motor_controller_FR->battery_voltage,motor_controller_FR->analog_voltage);
@@ -60,10 +49,6 @@ motor_controller_FR->getVoltages();
 	ROS_INFO("Motor Power 1: %d\t2: %d ",motor_controller_FR->motor_power_[0],motor_controller_FR->motor_power_[1]);
 
 */
-//globali++;
-	//motor_controller_FR->setVAR(1, globali);
-
-
 }
 
 void test_function2(const ros::TimerEvent&)
@@ -107,8 +92,12 @@ int main(int argc, char **argv)
 	ros::Timer timer = n.createTimer(ros::Duration(.015), test_function);
 	ros::Timer timer2 = n.createTimer(ros::Duration(.5), test_function2);
 	//ros::Timer timer3 = n.createTimer(ros::Duration(2), test_function2);
-
-	ros::spin();
+	while (true)
+	{
+		ros::spinOnce();
+		controller->readserialbuss();
+        usleep(100);
+	}
 
 	return 0;
 }

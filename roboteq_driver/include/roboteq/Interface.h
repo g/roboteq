@@ -78,46 +78,31 @@ class Interface {
 		
 	
 	bool sendRuntimeCommand(string strCommand);
-	bool sendRuntimeQuery(string strQuery);
-	pthread_t read_thread_;
+	bool sendSerial(string strQuery);
 	LightweightSerial *controllerPort;
-
-	//bool (roboteq::*callback[20])(string *data);
-	int callbackstackpointer;//id of the end of the que, its size.
-	bool is_callback_locked_;
 
 	bool runCallback(string *data);
 	bool addCallback(bool (*func)(void));
-	
-	bool decodeVoltage(string *value);
-	bool decodeMotorCurrent(string *value);
-	bool decodeBatCurrent(string *value);
-	bool decodeCommanded(string *value);
-	bool decodeMotorRPM(string *value);
-	bool decodeMotorPower(string *value);
-	bool decodeMotorSetpoint(string *value);
-	
-
+	std::string last_command_sent_;//command is a type of message.
 
 	public :
 	
 	int motor_speed_[2];
-	double motor_current_[2];//done
-	double batCurrent;
-	double motorCommanded[2];//done
-	double drive_voltage;//done
-	double battery_voltage;//done
-	double analog_voltage;//done
-	long encoderCount[2];//done
-	int encoderRPM[2];//done
+	double motor_current_[2];
+	double batery_current_;
+	double motor_commanded_[2];
+	double drive_voltage_;
+	double battery_voltage_;
+	double analog_voltage_;
+	long encoder_count_[2];
+	int encoder_rpm_[2];
 	int motor_power_[2];
-	int statusFlag;
-	int fautFlag;
-	float motorTemperature[2];
-	float channelTemperature[2];
-	float icTemperature;
-	float closedLoopErr;//done
-
+	int status_flag_;
+	int faut_flag_;
+	float motor_temperature_[2];
+	float channel_temperature_[2];
+	float ic_temperature_;
+	float closed_loop_err_;
 
 	std::string user_var;
 	Interface();
@@ -128,7 +113,6 @@ class Interface {
 	bool getUserVariable();
 	bool getVoltages();
 
-	
 	//To impliment
 	//Runtime Commands
 	bool resetDIOx(int i);
@@ -138,19 +122,17 @@ class Interface {
 	bool setEstop();
 	bool resetEstop();
 	bool setVAR(int i, int val);
-	
 
 	//Runtime Querys	
-	bool getMotorCurrent();//done
-	bool getAnalogValues();//done
-	bool getAnalogValue(int i);//done
-	bool getBatteryAmps();//done
-	bool getEncoderCount();//done
+	bool getMotorCurrent();
+	bool getAnalogValues();
+	bool getAnalogValue(int i);
+	bool getBatteryAmps();
+	bool getEncoderCount();
 //	bool getEncoderCountREL();
 	bool getDigitalInputs();
-	//do we need individual inputs?
 	bool getDigitalOutputs();
-	bool getClosedLoopError();//done
+	bool getClosedLoopError();
 	//bool getFeedbackIn();
 	bool getFault();
 	bool getStatus();
@@ -164,19 +146,8 @@ class Interface {
 	bool controllerPresent();
 	bool getMotorCommanded();
 	void readserialbuss();
-	static void *readserialLaunch(void *context);
-	bool startInternalThread();
 	bool getBatCurrent();
-	
-
-
-	
-
 };
-
-
-//static void * InternalThreadEntryFunc(void * This);
-
 
 }
 
