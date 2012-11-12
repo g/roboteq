@@ -1,4 +1,4 @@
-#include "roboteq/roboteq.h"
+#include "roboteq/Interface.h"
 
 bool setup_controllers();
 //bool sendRuntimeQuery(string strQuery, string *response);
@@ -6,7 +6,7 @@ bool setup_controllers();
 
 double last_path_error_callback=0;
 
-
+namespace roboteq {
 
 
 /*int main(int argc, char **argv)
@@ -132,7 +132,7 @@ double last_path_error_callback=0;
 
 bool setup_controllers()
 {
-/*	roboteq *temp;
+/*	Interface *temp;
 	std:string mControlUserVar="";
 	K=gsl_matrix_alloc(4,3);
 	gsl_matrix_set(K,0,0,1);
@@ -151,7 +151,7 @@ bool setup_controllers()
 	gsl_matrix_set(K,3,2,c+l);
 
 
-	motor_controller_1 = new roboteq(MCNTRL_PORT_1,115200);
+	motor_controller_1 = new Interface(MCNTRL_PORT_1,115200);
 	motor_controller_1->Motor1Speed=0;
 	motor_controller_1->Motor2Speed=0;
 
@@ -164,7 +164,7 @@ bool setup_controllers()
 	if (!motor_controller_1->getUserVariable())
 		return FALSE;
 
-	motor_controller_2 = new roboteq(MCNTRL_PORT_2,115200);
+	motor_controller_2 = new Interface(MCNTRL_PORT_2,115200);
 	motor_controller_2->Motor1Speed=0;
 	motor_controller_2->Motor2Speed=0;
 
@@ -190,7 +190,7 @@ bool setup_controllers()
 */
 	return TRUE;
 }
-roboteq::roboteq () 
+Interface::Interface () 
 {
 	serialPort = 0;
 	controller_baud_ = 0;
@@ -200,7 +200,7 @@ roboteq::roboteq ()
 	callbackstackpointer=0;
 }
 
-roboteq::roboteq (const char *port, int baud) 
+Interface::Interface (const char *port, int baud) 
 {
 	serialPort = port;
 	controller_baud_ = baud;
@@ -210,12 +210,12 @@ roboteq::roboteq (const char *port, int baud)
 }
 
 
-roboteq::~roboteq()
+Interface::~Interface()
 {
 
 }
 
-bool roboteq::setupComm()
+bool Interface::setupComm()
 {
 	char byteRead=0;
 	string command_Readback="";
@@ -261,7 +261,7 @@ bool roboteq::setupComm()
 			
 		}	
 		else {
-			ROS_INFO("CONTROL: could not write to roboteq");
+			ROS_INFO("CONTROL: could not write to Interface");
 			com_status_=FALSE;
 			return com_status_;
 		}
@@ -282,7 +282,7 @@ bool roboteq::setupComm()
 	return com_status_;
 }
 
-bool roboteq::setMotorSpeeds()
+bool Interface::setMotorSpeeds()
 {
 	string motor_command="";
 	stringstream m1_string;
@@ -334,7 +334,7 @@ bool roboteq::setMotorSpeeds()
 }
 
 
-bool roboteq::getUserVariable()
+bool Interface::getUserVariable()
 {
 	string command_Readback="";
 	char byteRead=0;
@@ -371,12 +371,12 @@ bool roboteq::getUserVariable()
 }
 
 
-bool roboteq::getMotorCurrent()
+bool Interface::getMotorCurrent()
 {
 
-	//addCallback(&roboteq::decodeMotorCurrent);
+	//addCallback(&Interface::decodeMotorCurrent);
 	while(is_callback_locked_);
-	callback[callbackstackpointer]=&roboteq::decodeMotorCurrent;
+	callback[callbackstackpointer]=&Interface::decodeMotorCurrent;
 	callbackstackpointer++;
 	if(sendRuntimeQuery("?A\r")==true)
 	{
@@ -390,10 +390,10 @@ bool roboteq::getMotorCurrent()
 
 }
 
-bool roboteq::getBatCurrent()
+bool Interface::getBatCurrent()
 {
 	while(is_callback_locked_);
-	callback[callbackstackpointer]=&roboteq::decodeBatCurrent;
+	callback[callbackstackpointer]=&Interface::decodeBatCurrent;
 	callbackstackpointer++;
 	if(sendRuntimeQuery("?BA\r")==true)
 	{
@@ -407,11 +407,11 @@ bool roboteq::getBatCurrent()
 
 }
 
-bool roboteq::getVoltages()
+bool Interface::getVoltages()
 {
 
 	while(is_callback_locked_);
-	callback[callbackstackpointer]=&roboteq::decodeVoltage;
+	callback[callbackstackpointer]=&Interface::decodeVoltage;
 	callbackstackpointer++;
 
 	if(sendRuntimeQuery("?V\r")==true)
@@ -425,7 +425,7 @@ bool roboteq::getVoltages()
 	}		
 }
 
-bool roboteq::sendRuntimeCommand(string strCommand)
+bool Interface::sendRuntimeCommand(string strCommand)
 {
 
 	string ack="";
@@ -471,7 +471,7 @@ bool roboteq::sendRuntimeCommand(string strCommand)
 	}
 }//RuntimeCommand
 
-bool roboteq::decodeVoltage(string *value)
+bool Interface::decodeVoltage(string *value)
 {
 
 	//ROS_INFO("CONTROL:  Decoding voltages value 1 is");
@@ -489,7 +489,7 @@ bool roboteq::decodeVoltage(string *value)
 	return true;		
 }
 
-bool roboteq::decodeMotorCurrent(string *value)
+bool Interface::decodeMotorCurrent(string *value)
 {
 
 	//ROS_INFO("CONTROL:  Decoding voltages value 1 is");
@@ -503,7 +503,7 @@ bool roboteq::decodeMotorCurrent(string *value)
 	return true;		
 }
 
-bool roboteq::decodeCommanded(string *value)
+bool Interface::decodeCommanded(string *value)
 {
 
 	//ROS_INFO("CONTROL:  Decoding voltages value 1 is");
@@ -517,7 +517,7 @@ bool roboteq::decodeCommanded(string *value)
 	return true;		
 }
 
-bool roboteq::decodeBatCurrent(string *value)
+bool Interface::decodeBatCurrent(string *value)
 {
 
 	//ROS_INFO("CONTROL:  Decoding voltages value 1 is");
@@ -530,7 +530,7 @@ bool roboteq::decodeBatCurrent(string *value)
 	return true;		
 }
 
-bool roboteq::decodeMotorRPM(string *value)
+bool Interface::decodeMotorRPM(string *value)
 {
 
 	//ROS_INFO("CONTROL:  Decoding Motor RPM");	
@@ -541,7 +541,7 @@ bool roboteq::decodeMotorRPM(string *value)
 	return true;		
 }
 
-bool roboteq::decodeMotorPower(string *value)
+bool Interface::decodeMotorPower(string *value)
 {
 
 	//ROS_INFO("CONTROL:  Decoding Motor RPM");	
@@ -554,7 +554,7 @@ bool roboteq::decodeMotorPower(string *value)
 
 
 
-bool roboteq::decodeMotorSetpoint(string *value)
+bool Interface::decodeMotorSetpoint(string *value)
 {
 
 	//ROS_INFO("CONTROL:  Decoding Motor RPM");	
@@ -570,11 +570,11 @@ bool roboteq::decodeMotorSetpoint(string *value)
 		
 	return true;		
 }
-/*bool roboteq::sendRuntimeQuery(string strQuery, string *response)
+/*bool Interface::sendRuntimeQuery(string strQuery, string *response)
 {
 
 	//string[] result;
-	string roboteqResponse="";
+	string InterfaceResponse="";
 	string command_Readback="";
 	char byteRead=0;
 	int i=0,nextLoc=0;
@@ -593,29 +593,29 @@ bool roboteq::decodeMotorSetpoint(string *value)
 		{	
 			usleep(100);
 			if (controllerPort->read(&byteRead)) {
-				roboteqResponse += byteRead;
+				InterfaceResponse += byteRead;
 			}
 		}
 
 		
-		if (roboteqResponse[0]!='-')
+		if (InterfaceResponse[0]!='-')
 		{
 			
-			//ROS_INFO("CONTROL: Query ACKED send> %s : response:>%s",strQuery.c_str(),roboteqResponse.c_str());
-			roboteqResponse=roboteqResponse.substr(roboteqResponse.find("=")+1);
+			//ROS_INFO("CONTROL: Query ACKED send> %s : response:>%s",strQuery.c_str(),InterfaceResponse.c_str());
+			InterfaceResponse=InterfaceResponse.substr(InterfaceResponse.find("=")+1);
 			while (nextLoc!=string::npos)
 			{
-				nextLoc=roboteqResponse.find(":");
-				//ROS_INFO("for %d got:%s \n",i,roboteqResponse.substr(0,nextLoc).c_str());
-				response[i++]=roboteqResponse.substr(0,nextLoc).c_str();
-				roboteqResponse=roboteqResponse.substr(nextLoc+1);
+				nextLoc=InterfaceResponse.find(":");
+				//ROS_INFO("for %d got:%s \n",i,InterfaceResponse.substr(0,nextLoc).c_str());
+				response[i++]=InterfaceResponse.substr(0,nextLoc).c_str();
+				InterfaceResponse=InterfaceResponse.substr(nextLoc+1);
 			}
 
 			return 0;
 		}
 		else
 		{
-			ROS_INFO("CONTROL: Query error- send> %s : response:>%s",strQuery.c_str(),roboteqResponse.c_str());		
+			ROS_INFO("CONTROL: Query error- send> %s : response:>%s",strQuery.c_str(),InterfaceResponse.c_str());		
 			return -1;
 		}
 	}
@@ -626,7 +626,7 @@ bool roboteq::decodeMotorSetpoint(string *value)
 	}
 }*///RuntimeQuery
 
-bool roboteq::sendRuntimeQuery(string strQuery)
+bool Interface::sendRuntimeQuery(string strQuery)
 {
 	if (controllerPort->write_block(strQuery.c_str(),strQuery.length())) {
 	
@@ -640,10 +640,10 @@ bool roboteq::sendRuntimeQuery(string strQuery)
 }//RuntimeQuery
 
 //Reading thread
-void roboteq::readserialbuss()
+void Interface::readserialbuss()
 {
 	string response[20];
-	string roboteqResponse="";
+	string InterfaceResponse="";
 	string command_Readback="";
 	char byteRead=0;
 	int nextLoc=0,i=0;	
@@ -652,7 +652,7 @@ void roboteq::readserialbuss()
 	while (1)
 	{
 		byteRead=0;
-		roboteqResponse="";
+		InterfaceResponse="";
 				
 		for (i=0;i<20;i++)
 		{
@@ -676,25 +676,25 @@ void roboteq::readserialbuss()
 		{	
 			usleep(100);
 			if (controllerPort->read(&byteRead)) {
-				roboteqResponse += byteRead;
+				InterfaceResponse += byteRead;
 			}
 		}
-		if (roboteqResponse[0]!='-')
+		if (InterfaceResponse[0]!='-')
 		{
 		
-			if (roboteqResponse[0]!='+')
+			if (InterfaceResponse[0]!='+')
 			{
 				nextLoc=0;
 				i=0;
 			
-					//ROS_INFO("CONTROL: Query ACKED send>  response:>%s",roboteqResponse.c_str());
-					roboteqResponse=roboteqResponse.substr(roboteqResponse.find("=")+1);
+					//ROS_INFO("CONTROL: Query ACKED send>  response:>%s",InterfaceResponse.c_str());
+					InterfaceResponse=InterfaceResponse.substr(InterfaceResponse.find("=")+1);
 					while (nextLoc!=string::npos)
 					{
-						nextLoc=roboteqResponse.find(":");
-						//ROS_INFO("for %d got:%s \n",i,roboteqResponse.substr(0,nextLoc).c_str());
-						response[i++]=roboteqResponse.substr(0,nextLoc).c_str();
-						roboteqResponse=roboteqResponse.substr(nextLoc+1);
+						nextLoc=InterfaceResponse.find(":");
+						//ROS_INFO("for %d got:%s \n",i,InterfaceResponse.substr(0,nextLoc).c_str());
+						response[i++]=InterfaceResponse.substr(0,nextLoc).c_str();
+						InterfaceResponse=InterfaceResponse.substr(nextLoc+1);
 					}
 
 					//send data to callback
@@ -704,38 +704,38 @@ void roboteq::readserialbuss()
 					runCallback(response);
 			}else{
 				//it was a command response send ok.
-				//ROS_INFO("CONTROL: Query ACKED send>  response:>%s",roboteqResponse.c_str());
+				//ROS_INFO("CONTROL: Query ACKED send>  response:>%s",InterfaceResponse.c_str());
 				response[0]='1';
 				runCallback(response);
 			}
 
 			
 		}else{
-			ROS_INFO("CONTROL: Query error-response:>%s",roboteqResponse.c_str());		
+			ROS_INFO("CONTROL: Query error-response:>%s",InterfaceResponse.c_str());		
 			//return -1;
 		}
-		//ROS_INFO("readthread got: %s !!!!: Query send error",roboteqResponse.c_str());
+		//ROS_INFO("readthread got: %s !!!!: Query send error",InterfaceResponse.c_str());
 	}	//return NULL;
 	return;
 }
 /*static void *readserialLaunch(void *context)
 {
-	return((roboteq*)context)->readserialbuss(NULL);
+	return((Interface*)context)->readserialbuss(NULL);
 }*/
 	//bool runCallback(string *data);
 	//bool addCallback(void (*func)(void));
 
-bool roboteq::addCallback(bool (*func)(void))
+bool Interface::addCallback(bool (*func)(void))
 {
 
 //	ROS_INFO("CONTROL: added callback @ postion %d",callbackstackpointer);
-//	callback[callbackstackpointer]=&roboteq::func;
+//	callback[callbackstackpointer]=&Interface::func;
 //	callbackstackpointer++;
 
 return true;
 }//addcallback
 
-bool roboteq::runCallback(string *data)
+bool Interface::runCallback(string *data)
 {
 	int i;
 	is_callback_locked_=true;
@@ -764,19 +764,19 @@ bool roboteq::runCallback(string *data)
 }//runcallback
 
 
-bool roboteq::startInternalThread()
+bool Interface::startInternalThread()
 {
-	return(pthread_create(&read_thread_,NULL,InternalThreadEntryFunc,this)==0);//(roboteq*)context)->readserialbuss(NULL);
+	return(pthread_create(&read_thread_,NULL,InternalThreadEntryFunc,this)==0);//(Interface*)context)->readserialbuss(NULL);
 }
 
 static void *InternalThreadEntryFunc(void * This) 
 {
-	((roboteq *)This)->readserialbuss(); 
+	((Interface *)This)->readserialbuss(); 
 	return NULL;
 }
 
 //Runtime Commands
-bool roboteq::resetDIOx(int i)
+bool Interface::resetDIOx(int i)
 {
 //need to redo this one
 	string strCommand;
@@ -786,7 +786,7 @@ bool roboteq::resetDIOx(int i)
 	return sendRuntimeCommand(strCommand);
 }//resetDIO
 
-bool roboteq::setDIOx(int i)	
+bool Interface::setDIOx(int i)	
 {
 //need to redo this one
 	string strCommand;
@@ -796,7 +796,7 @@ bool roboteq::setDIOx(int i)
 	return sendRuntimeCommand(strCommand);
 }//setDIO
 
-bool roboteq::setSetpoint(int motor,int val)
+bool Interface::setSetpoint(int motor,int val)
 {
 //need to redo this one
 	string strCommand;
@@ -808,7 +808,7 @@ bool roboteq::setSetpoint(int motor,int val)
 	return sendRuntimeCommand(strCommand);
 }//setSetpoint
 
-bool roboteq::setSetpoint(int val)
+bool Interface::setSetpoint(int val)
 {
 //need to redo this one
 	string strCommand;
@@ -816,7 +816,7 @@ bool roboteq::setSetpoint(int val)
 	stringVal << val;
 	strCommand="!G " + stringVal.str() +"\r";
 	while(is_callback_locked_);
-	callback[callbackstackpointer]=&roboteq::decodeMotorSetpoint;
+	callback[callbackstackpointer]=&Interface::decodeMotorSetpoint;
 	callbackstackpointer++;
 	if(sendRuntimeQuery(strCommand)==true)
 	{
@@ -833,7 +833,7 @@ bool roboteq::setSetpoint(int val)
 return sendRuntimeQuery(strCommand);
 }//setSetpoint
 
-bool roboteq::setEstop()
+bool Interface::setEstop()
 {
 //need to redo this one
 	string strCommand;
@@ -841,7 +841,7 @@ bool roboteq::setEstop()
 	return sendRuntimeCommand(strCommand);
 }//setEstop
 
-bool roboteq::resetEstop()
+bool Interface::resetEstop()
 {
 //need to redo this one
 	string strCommand;
@@ -849,7 +849,7 @@ bool roboteq::resetEstop()
 	return sendRuntimeCommand(strCommand);
 }
 
-bool roboteq::setVAR(int i, int val)
+bool Interface::setVAR(int i, int val)
 {
 //need to redo this one
 	string strCommand;
@@ -862,7 +862,7 @@ bool roboteq::setVAR(int i, int val)
 }//setVAR
 
 
-int roboteq::readVAR(int i)
+int Interface::readVAR(int i)
 {
 //need to do this one
 	string qryResponse[20]; 
@@ -883,7 +883,7 @@ int roboteq::readVAR(int i)
 
 
 
-bool roboteq::getClosedLoopError()
+bool Interface::getClosedLoopError()
 {
 //need to do this one
 
@@ -904,11 +904,11 @@ bool roboteq::getClosedLoopError()
 
 
 	
-bool roboteq::getMotorCommanded()
+bool Interface::getMotorCommanded()
 {
 
 	while(is_callback_locked_);
-	callback[callbackstackpointer]=&roboteq::decodeCommanded;
+	callback[callbackstackpointer]=&Interface::decodeCommanded;
 	callbackstackpointer++;
 
 	if(sendRuntimeQuery("?M\r")==true)
@@ -924,7 +924,7 @@ bool roboteq::getMotorCommanded()
 }//get motor commanded
 
 
-bool roboteq::getEncoderCount()
+bool Interface::getEncoderCount()
 {
 	//need to do this one
 
@@ -945,10 +945,10 @@ bool roboteq::getEncoderCount()
 }//get encoder count
 
 
-bool roboteq::getMotorRPM()
+bool Interface::getMotorRPM()
 {
 	while(is_callback_locked_);
-	callback[callbackstackpointer]=&roboteq::decodeMotorRPM;
+	callback[callbackstackpointer]=&Interface::decodeMotorRPM;
 	callbackstackpointer++;
 
 	if(sendRuntimeQuery("?S\r")==true)
@@ -960,11 +960,11 @@ bool roboteq::getMotorRPM()
 	}
 }//get motor RPM
 
-bool roboteq::getMotorPower()
+bool Interface::getMotorPower()
 {
 	
 	while(is_callback_locked_);
-	callback[callbackstackpointer]=&roboteq::decodeMotorPower;
+	callback[callbackstackpointer]=&Interface::decodeMotorPower;
 	callbackstackpointer++;
 
 	if(sendRuntimeQuery("?P\r")==0)
@@ -979,7 +979,7 @@ bool roboteq::getMotorPower()
 
 
 //need to do this one!!!
-bool roboteq::getFault()
+bool Interface::getFault()
 {
 	
 
@@ -995,4 +995,6 @@ bool roboteq::getFault()
 
 	bool getFault();
 	bool getStatus();
+
+    }
 

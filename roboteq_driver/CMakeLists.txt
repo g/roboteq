@@ -26,5 +26,6 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
-rosbuild_add_executable(main_driver src/main_driver.cpp src/roboteq.cpp src/lightweightserial.cpp )
+rosbuild_add_executable(driver src/driver.cpp src/roboteq/Callbacks.cpp 
+                        src/roboteq/Interface.cpp src/roboteq/lightweightserial.cpp )
 #target_link_libraries(example ${PROJECT_NAME})

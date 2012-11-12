@@ -67,9 +67,9 @@ using namespace std;
 //double cross_e=0; //currrent cross_track error
 //double reqd_vel=0;
 
+namespace roboteq {
 
-
-class roboteq {
+class Interface {
 	private :
 	const char *serialPort;
 	int controller_baud_;
@@ -82,7 +82,7 @@ class roboteq {
 	pthread_t read_thread_;
 	LightweightSerial *controllerPort;
 
-	bool (roboteq::*callback[20])(string *data);
+	//bool (roboteq::*callback[20])(string *data);
 	int callbackstackpointer;//id of the end of the que, its size.
 	bool is_callback_locked_;
 
@@ -120,9 +120,9 @@ class roboteq {
 
 
 	std::string user_var;
-	roboteq();
-	roboteq(const char *port, int baud);
-	~roboteq();
+	Interface();
+	Interface(const char *port, int baud);
+	~Interface();
 	bool setupComm();
 	bool setMotorSpeeds();
 	bool getUserVariable();
@@ -175,10 +175,9 @@ class roboteq {
 };
 
 
-static void * InternalThreadEntryFunc(void * This);
+//static void * InternalThreadEntryFunc(void * This);
 
 
-//roboteq* motor_controller_1; //left controller
-//roboteq* motor_controller_2; //right controller
+}
 
 #endif
