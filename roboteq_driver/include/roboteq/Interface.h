@@ -41,6 +41,7 @@ class Interface {
     Interface (const char *port, int baud, Callbacks* callbacks);
 	~Interface();
 	void connect();
+	bool connected() { return connected_; }
 	void spinOnce();
 
 	void setMotorSpeeds();
