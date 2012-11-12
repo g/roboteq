@@ -35,14 +35,33 @@ void setMotorSpeedsFromControler(const geometry_msgs::Twist::ConstPtr& msg)
 
 void test_function(const ros::TimerEvent&)
 {
-	ROS_INFO("Getting Voltages");
+	//ROS_INFO("Getting Voltages");
 	motor_controller_FR->getVoltages();
-	ROS_INFO("Motor Drive voltage %f \n Bat Voltage %f analog Voltage %f\n",motor_controller_FR->drive_voltage,motor_controller_FR->battery_voltage,motor_controller_FR->analog_voltage);
-/*	motor_controller_FR->getMotorCurrent();
-	ROS_INFO("Motor Drive Current 1 %f \n Motor Drive Current 2 %f \n",motor_controller_FR->Motor1Current,motor_controller_FR->Motor2Current);
+	motor_controller_FR->getMotorCurrent();
+	motor_controller_FR->getBatCurrent();
+	motor_controller_FR->getMotorCommanded();
+	motor_controller_FR->getMotorRPM();
+	motor_controller_FR->getMotorPower();
+	
 
-*/
-globali++;
+
+/*motor_controller_FR->getVoltages();
+motor_controller_FR->getVoltages();
+motor_controller_FR->getVoltages();
+motor_controller_FR->getVoltages();
+
+*/	
+	//ROS_INFO("Getting Current");
+	
+	ROS_INFO("Motor Drive Current 1: %f\t2: %f ",motor_controller_FR->motor_current_[0],motor_controller_FR->motor_current_[1]);
+	ROS_INFO("Motor Drive voltage %f  Bat Voltage %f analog Voltage %f",motor_controller_FR->drive_voltage,motor_controller_FR->battery_voltage,motor_controller_FR->analog_voltage);
+	ROS_INFO("Bat Current %f ",motor_controller_FR->batCurrent);
+	ROS_INFO("Motor Comanded 1: %f\t2: %f ",motor_controller_FR->motorCommanded[0],motor_controller_FR->motorCommanded[1]);
+	ROS_INFO("Motor RPM 1: %d\t2: %d ",motor_controller_FR->encoderRPM[0],motor_controller_FR->encoderRPM[1]);
+	ROS_INFO("Motor Power 1: %d\t2: %d ",motor_controller_FR->motor_power_[0],motor_controller_FR->motor_power_[1]);
+
+
+//globali++;
 	//motor_controller_FR->setVAR(1, globali);
 
 
@@ -50,7 +69,8 @@ globali++;
 
 void test_function2(const ros::TimerEvent&)
 {
-	ROS_INFO("Wuddup 2");
+	//ROS_INFO("Wuddup 2");
+	motor_controller_FR->setSetpoint(globali++);
 //	ROS_INFO("Wuddup 2 ,var = %d", motor_controller_FR->readVAR(1));
 
 }
@@ -69,7 +89,7 @@ int main(int argc, char **argv)
 	//motor_controller setup here
 	//motor_controller_RR = new roboteq("/dev/ttyACM0", 115200);  // Front left controller
 	
-	motor_controller_FR = new roboteq("/dev/ttyACM0", 115200);  // Front left controller
+	motor_controller_FR = new roboteq("/dev/ttyACM2", 115200);  // Front left controller
 	//roboteq* motor_controller_FL = new roboteq("/dev/ttyACM1", 115200);  // Front right controller
 	//roboteq* motor_controller_RR = new roboteq("/dev/ttyACM2", 115200);  // Front right controller
 	//roboteq* motor_controller_RL = new roboteq("/dev/ttyACM3", 115200);  // Front right controller
@@ -85,8 +105,8 @@ int main(int argc, char **argv)
 	//Setup Serial Port
 
 	//setup timers for getting data from roboteq
-	ros::Timer timer = n.createTimer(ros::Duration(1), test_function);
-	ros::Timer timer2 = n.createTimer(ros::Duration(2), test_function2);
+	ros::Timer timer = n.createTimer(ros::Duration(.015), test_function);
+	ros::Timer timer2 = n.createTimer(ros::Duration(.5), test_function2);
 	//ros::Timer timer3 = n.createTimer(ros::Duration(2), test_function2);
 
 	ros::spin();

@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
+#include <pthread.h>
 
 //#include "igvc_control/control_msg.h" //for messages
 //#include "igvc_control/motor_diag.h"	
@@ -24,11 +25,6 @@
 #define MCNTRL_PORT_1 "/dev/ttyACM0"
 #define MCNTRL_PORT_2 "/dev/ttyACM1"
 
-#define MAX_SPEED 1800.0
-#define MAX_YAW 1800.0
-
-#define max_yaw_rate 20 //rad/s
-#define max_fwd_vel 18 //m/s
 
 #define ASCII_CR_CODE 13
 #define ASCII_ACK_CODE 43
@@ -72,28 +68,55 @@ using namespace std;
 //double reqd_vel=0;
 
 
+
 class roboteq {
 	private :
 	const char *serialPort;
-	int controllerBaud;
-	bool comStatus;
+	int controller_baud_;
+	bool com_status_;
 	std::string version;
 		
-	LightweightSerial *controllerPort;
+	
 	bool sendRuntimeCommand(string strCommand);
-	bool sendRuntimeQuery(string strQuery, string *response);
+	bool sendRuntimeQuery(string strQuery);
+	pthread_t read_thread_;
+	LightweightSerial *controllerPort;
+
+	bool (roboteq::*callback[20])(string *data);
+	int callbackstackpointer;//id of the end of the que, its size.
+	bool is_callback_locked_;
+
+	bool runCallback(string *data);
+	bool addCallback(bool (*func)(void));
+	
+	bool decodeVoltage(string *value);
+	bool decodeMotorCurrent(string *value);
+	bool decodeBatCurrent(string *value);
+	bool decodeCommanded(string *value);
+	bool decodeMotorRPM(string *value);
+	bool decodeMotorPower(string *value);
+	bool decodeMotorSetpoint(string *value);
+	
+
+
 	public :
-	int Motor1Speed;
-	int Motor2Speed;
-	double Motor1Current;
-	double Motor2Current;
-	double drive_voltage;
-	double battery_voltage;
-	double analog_voltage;
-	int encoder1Count;
-	int encoder2Count;
+	
+	int motor_speed_[2];
+	double motor_current_[2];//done
+	double batCurrent;
+	double motorCommanded[2];//done
+	double drive_voltage;//done
+	double battery_voltage;//done
+	double analog_voltage;//done
+	long encoderCount[2];//done
+	int encoderRPM[2];//done
+	int motor_power_[2];
 	int statusFlag;
 	int fautFlag;
+	float motorTemperature[2];
+	float channelTemperature[2];
+	float icTemperature;
+	float closedLoopErr;//done
 
 
 	std::string user_var;
@@ -103,7 +126,6 @@ class roboteq {
 	bool setupComm();
 	bool setMotorSpeeds();
 	bool getUserVariable();
-	
 	bool getVoltages();
 
 	
@@ -119,39 +141,41 @@ class roboteq {
 	
 
 	//Runtime Querys	
-	bool getMotorCurrent();
-	bool getAnalogValues();
-	bool getAnalogValue(int i);
-	bool getBatteryAmps();
-	bool getEncoderCountABS();
-	bool getEncoderCountREL();
+	bool getMotorCurrent();//done
+	bool getAnalogValues();//done
+	bool getAnalogValue(int i);//done
+	bool getBatteryAmps();//done
+	bool getEncoderCount();//done
+//	bool getEncoderCountREL();
 	bool getDigitalInputs();
 	//do we need individual inputs?
 	bool getDigitalOutputs();
-	bool getClosedLoopError();
-	bool getFeedbackIn();
+	bool getClosedLoopError();//done
+	//bool getFeedbackIn();
 	bool getFault();
 	bool getStatus();
-	bool getMotorPowerOutput();
+	bool getMotorPower();
 	bool getPulsedInputs();
-	bool getSpeeds();
+	bool getMotorRPM();
 	bool getTemp();
 	bool getVolts();
 	int readVAR();
 	int readVAR(int i);
 	bool controllerPresent();
+	bool getMotorCommanded();
+	void readserialbuss();
+	static void *readserialLaunch(void *context);
+	bool startInternalThread();
+	bool getBatCurrent();
 	
-	
-	
-	
-	
+
 
 	
 
 };
 
 
-
+static void * InternalThreadEntryFunc(void * This);
 
 
 //roboteq* motor_controller_1; //left controller
