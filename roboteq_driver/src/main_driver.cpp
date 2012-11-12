@@ -35,31 +35,26 @@ void setMotorSpeedsFromControler(const geometry_msgs::Twist::ConstPtr& msg)
 
 void test_function(const ros::TimerEvent&)
 {
-	//ROS_INFO("Getting Voltages");
+
 	motor_controller_FR->getVoltages();
 	motor_controller_FR->getMotorCurrent();
 	motor_controller_FR->getBatCurrent();
 	motor_controller_FR->getMotorCommanded();
 	motor_controller_FR->getMotorRPM();
 	motor_controller_FR->getMotorPower();
+	motor_controller_FR->getClosedLoopError();
 	
 
 
-/*motor_controller_FR->getVoltages();
-motor_controller_FR->getVoltages();
-motor_controller_FR->getVoltages();
-motor_controller_FR->getVoltages();
 
-*/	
-	//ROS_INFO("Getting Current");
 	
-	ROS_INFO("Motor Drive Current 1: %f\t2: %f ",motor_controller_FR->motor_current_[0],motor_controller_FR->motor_current_[1]);
-	ROS_INFO("Motor Drive voltage %f  Bat Voltage %f analog Voltage %f",motor_controller_FR->drive_voltage,motor_controller_FR->battery_voltage,motor_controller_FR->analog_voltage);
-	ROS_INFO("Bat Current %f ",motor_controller_FR->batCurrent);
-	ROS_INFO("Motor Comanded 1: %f\t2: %f ",motor_controller_FR->motorCommanded[0],motor_controller_FR->motorCommanded[1]);
-	ROS_INFO("Motor RPM 1: %d\t2: %d ",motor_controller_FR->encoderRPM[0],motor_controller_FR->encoderRPM[1]);
+	/*ROS_INFO("Motor Drive Current 1: %f\t2: %f ",motor_controller_FR->motor_current_[0],motor_controller_FR->motor_current_[1]);
+	ROS_INFO("Motor Drive voltage %f  Bat Voltage %f analog Voltage %f",motor_controller_FR->drive_voltage_,motor_controller_FR->battery_voltage_,motor_controller_FR->analog_voltage_);
+	ROS_INFO("Bat Current %f ",motor_controller_FR->batery_current_);
+	ROS_INFO("Motor Comanded 1: %f\t2: %f ",motor_controller_FR->motor_commanded_[0],motor_controller_FR->motor_commanded_[1]);
+	ROS_INFO("Motor RPM 1: %d\t2: %d ",motor_controller_FR->encoder_rpm_[0],motor_controller_FR->encoder_rpm_[1]);
 	ROS_INFO("Motor Power 1: %d\t2: %d ",motor_controller_FR->motor_power_[0],motor_controller_FR->motor_power_[1]);
-
+*/
 
 //globali++;
 	//motor_controller_FR->setVAR(1, globali);
