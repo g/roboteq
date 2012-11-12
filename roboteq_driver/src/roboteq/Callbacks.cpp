@@ -16,7 +16,7 @@ bool Callbacks::handle(string response)
 
     // Split up response into multiple fields. 
     response = response.substr(equals_sign + 1);
-    size_t delimiter;
+    size_t delimiter = 0;
     uint8_t i = 0;
 	string fields[20];
     while (delimiter != string::npos)  

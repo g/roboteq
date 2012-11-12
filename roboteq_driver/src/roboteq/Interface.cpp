@@ -1,23 +1,14 @@
 #include "roboteq/Interface.h"
+#include "roboteq/Callbacks.h"
 
 
 double last_path_error_callback=0;
 
 namespace roboteq {
 
-Interface::Interface () 
+Interface::Interface (const char *port, int baud, Callbacks* callbacks)
+    : callbacks_(callbacks), port_(port), baud_(baud)
 {
-	serialPort = 0;
-	controller_baud_ = 0;
-	com_status_ = 0;
-	motor_speed_[0]=0;
-	motor_speed_[1]=0;
-}
-
-Interface::Interface (const char *port, int baud) 
-{
-	serialPort = port;
-	controller_baud_ = baud;
 	com_status_ = FALSE; //BAD
 	version="";
 }
@@ -34,7 +25,7 @@ bool Interface::setupComm()
 	int tries=0;
 
 	
-	controllerPort = new LightweightSerial(serialPort,controller_baud_);
+	controllerPort = new LightweightSerial(port_ , baud_);
 
 	while(tries<2) {
 		if (controllerPort->write_block("?FID\r",5)) {
@@ -332,6 +323,7 @@ void Interface::readserialbuss()
     else
     {
         // Call user callback with data.
+        callbacks_->handle(response);
 	}
 	return;
 }

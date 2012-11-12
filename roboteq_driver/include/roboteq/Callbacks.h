@@ -1,3 +1,5 @@
+#ifndef ROBOTEQ_CALLBACKS
+#define ROBOTEQ_CALLBACKS
 
 #include <stdint.h>
 #include <string>
@@ -32,3 +34,5 @@ class Callbacks
 };
 
 }
+
+#endif

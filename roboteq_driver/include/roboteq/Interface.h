@@ -1,9 +1,10 @@
-#ifndef ROBOTEQ_SERIAL_CONTROLLER
-#define ROBOTEQ_SERIAL_CONTROLLER
+#ifndef ROBOTEQ_INTERFACE
+#define ROBOTEQ_INTERFACE
 
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "roboteq/lightweightserial.h"
+#include "roboteq/Callbacks.h"
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
@@ -71,11 +72,11 @@ namespace roboteq {
 
 class Interface {
 	private :
-	const char *serialPort;
-	int controller_baud_;
+    Callbacks* callbacks_;
+	const char *port_;
+	int baud_;
 	bool com_status_;
 	std::string version;
-		
 	
 	bool sendRuntimeCommand(string strCommand);
 	bool sendSerial(string strQuery);
@@ -105,8 +106,7 @@ class Interface {
 	float closed_loop_err_;
 
 	std::string user_var;
-	Interface();
-	Interface(const char *port, int baud);
+    Interface (const char *port, int baud, Callbacks* callbacks);
 	~Interface();
 	bool setupComm();
 	bool setMotorSpeeds();
