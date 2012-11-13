@@ -13,11 +13,11 @@ class Callbacks
 {
   private:
     virtual void motorCurrent(float current_1, float current_2) { throw NoHandler(); }
-    virtual void batteryCurrent(float battery) { throw NoHandler(); }
+    virtual void supplyCurrent(float battery) { throw NoHandler(); }
     virtual void closedLoopError(uint8_t error) { throw NoHandler(); }
     virtual void motorCommanded(float commanded_1, float commanded_2) { throw NoHandler(); }
     virtual void encoderCount(uint32_t ticks_1, uint32_t ticks_2) { throw NoHandler(); }
-    virtual void motorRPM(uint32_t rpm_1, uint32_t rpm_2) { throw NoHandler(); }
+    virtual void encoderRPM(uint32_t rpm_1, uint32_t rpm_2) { throw NoHandler(); }
     virtual void motorPower(float power_1, float power_2) { throw NoHandler(); }
     virtual void voltages(float drive, float battery, float analog) { throw NoHandler(); }
 

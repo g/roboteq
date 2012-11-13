@@ -53,11 +53,11 @@ class Interface {
 	void resetEstop();
 	void setVAR(int i, int val);
 
-	//Runtime Querys	
+	// Runtime Querys.
 	void getMotorCurrent() { sendSerial("?A\r"); }
-	void getBatteryCurrent() { sendSerial("?BA\r"); }
+	void getSupplyCurrent() { sendSerial("?BA\r"); }
 	void getEncoderCount() { sendSerial("?C\r"); }
-	void getEncoderCountREL();
+	void getEncoderRPM() { sendSerial("?S\r"); }
 	void getDigitalInputs();
 	void getDigitalOutputs();
 	void getClosedLoopError() { sendSerial("?E\r"); }
@@ -66,7 +66,6 @@ class Interface {
 	void getStatus() { sendSerial("?FS\r"); }
     void getMotorPower() { sendSerial("?P\r"); }
 	void getPulsedInputs();
-	void getMotorRPM() { sendSerial("?S\r"); }
 	void getTemperatures();
 	void getMotorCommanded() { sendSerial("?M\r"); }
 	void getUserVariable() { sendSerial("?VAR\r"); }

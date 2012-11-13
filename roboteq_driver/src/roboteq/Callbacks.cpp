@@ -56,7 +56,7 @@ bool Callbacks::call(string code, string fields[])
             case 'E': closedLoopError(to_int(fields[0])); break;
             case 'M': motorCommanded(to_float(fields[0]), to_float(fields[1])); break;
             case 'C': encoderCount(to_float(fields[0]), to_float(fields[1])); break;
-            case 'S': motorRPM(to_float(fields[0]), to_float(fields[1])); break; 
+            case 'S': encoderRPM(to_float(fields[0]), to_float(fields[1])); break; 
             case 'P': motorPower(to_float(fields[0]), to_float(fields[1])); break;
             case 'V': voltages(to_float(fields[0]), to_float(fields[1]), to_float(fields[2], 0.001)); break;
             default:
@@ -68,7 +68,7 @@ bool Callbacks::call(string code, string fields[])
     } else if (code.compare("VAR") == 0) {
         //userVariable();
     } else if (code.compare("BA") == 0) {
-        batteryCurrent(to_float(fields[0])); 
+        supplyCurrent(to_float(fields[0])); 
     } else {
         // ROS_WARN("Unhandled code: %s", code)
         return false;
