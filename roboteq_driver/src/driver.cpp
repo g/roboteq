@@ -102,7 +102,6 @@ class Callbacks : public roboteq::Callbacks {
     }
  
     void encoderCount(uint32_t ticks_1, uint32_t ticks_2) { 
-
         check_status();
     }
 
