@@ -162,7 +162,7 @@ Callbacks(ros::Publisher feedback_publisher2, ros::Publisher status_publisher) :
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "~");
-	ros::NodeHandle nh;
+	ros::NodeHandle nh("~");
 
     string port;
     int32_t baud;
