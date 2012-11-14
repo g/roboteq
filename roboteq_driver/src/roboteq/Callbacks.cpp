@@ -8,7 +8,7 @@ namespace roboteq {
 
 bool Callbacks::handle(string response)
 {  
-     ROS_INFO("Response: %s", response.c_str());
+   //  ROS_INFO("Response: %s", response.c_str());
 
     size_t equals_sign = response.find("=");
     if (equals_sign == string::npos)
@@ -27,10 +27,11 @@ bool Callbacks::handle(string response)
     {
         delimiter = response.find(":");
         string field = response.substr(0, delimiter).c_str();
-         ROS_INFO("  field[%d] = %s \n", i, field.c_str());
+        // ROS_INFO("  field[%d] = %s \n", i, field.c_str());
         fields[i++] = field;
         response = response.substr(delimiter + 1);
     }
+	
 
     return call(code, fields);
 }

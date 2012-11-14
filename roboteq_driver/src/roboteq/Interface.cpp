@@ -87,32 +87,32 @@ bool Interface::readSerial()
 		response += byteRead;
 	}else{
 		// Nothing to process; exit the function.
-        return false;
-    }
-    	
-    while ((int)byteRead != ASCII_CR_CODE)
-    {	
-        if (controllerPort->read(&byteRead)) {
-            response += byteRead;
-        } else {
-            usleep(100);
-        }
-    }
+		return false;
+	}
+
+	while ((int)byteRead != ASCII_CR_CODE)
+	{	
+		if (controllerPort->read(&byteRead)) {
+		    response += byteRead;
+		} else {
+		    usleep(100);
+		}
+	}
 
 	if (response[0] == '-')
 	{
-        ROS_WARN("CONTROL: Query error-response:>%s", response.c_str());		
-        return true;
-    } 
-    else if (response[0] == '+')
-    {
-        ROS_DEBUG("CONTROL: Query ACKED send>  response:>%s", response.c_str());
-	    return true;
+		ROS_WARN("CONTROL: Query error-response:>%s", response.c_str());		
+		return true;
+	} 
+	else if (response[0] == '+')
+	{
+		ROS_DEBUG("CONTROL: Query ACKED send>  response:>%s", response.c_str());
+		return true;
 	}
-    else
-    {
-        // Call user callback with data.
-        return callbacks_->handle(response);
+	else
+	{
+		// Call user callback with data.
+		return callbacks_->handle(response);
 	}
 }
 

@@ -13,7 +13,14 @@ roboteq::Interface* controller;
 
 void command_callback(const roboteq_msgs::Command& command)
 {
-    // controller->setSetpoint(int motor, int val)
+	unsigned int i;
+	for (i=0;i<command.setpoint.size();i++)
+	{
+		//ROS_INFO("Sending %f to motor %d size2 %d", command.setpoint[i],i+1,command.setpoint.size());
+		//set the value of the motors 
+		controller->setSetpoint((i+1), command.setpoint[i]);
+	}
+
 }
 
 
@@ -23,8 +30,9 @@ class Callbacks : public roboteq::Callbacks {
     // Feedback message handlers
     
     uint8_t feedback_pending;
-    ros::Publisher feedback_publisher;
+   
     roboteq_msgs::Feedback feedback;
+ 	ros::Publisher feedback_publisher;
 
     void request_feedback()
     {
@@ -39,6 +47,7 @@ class Callbacks : public roboteq::Callbacks {
 
     void check_feedback() {
         if (--feedback_pending == 0) {
+			//ROS_INFO("Feedback Send %d",feedback_pending);
             feedback_publisher.publish(feedback);
         } 
     }
@@ -51,9 +60,12 @@ class Callbacks : public roboteq::Callbacks {
     }
     
     void motorCurrent(float current_1, float current_2) {
-        feedback.motor_current[0] = current_1;
-        feedback.motor_current[1] = current_2;
-        check_feedback();
+    
+	feedback.motor_current.resize(2);  
+	feedback.motor_current[0] = current_1;
+    feedback.motor_current[1] = current_2;
+    check_feedback();
+ 
     }
     
     void supplyCurrent(float current) {
@@ -62,18 +74,21 @@ class Callbacks : public roboteq::Callbacks {
     }
 
     void motorCommanded(float commanded_1, float commanded_2) {
-        feedback.motor_commanded[0] = commanded_1;
+        feedback.motor_commanded.resize(2);
+	feedback.motor_commanded[0] = commanded_1;
         feedback.motor_commanded[1] = commanded_2;
         check_feedback();
     }
 
     void encoderRPM(uint32_t rpm_1, uint32_t rpm_2) {
+	feedback.encoder_rpm.resize(2);
         feedback.encoder_rpm[0] = rpm_1;
         feedback.encoder_rpm[1] = rpm_2;
         check_feedback();
     }
 
     void motorPower(float power_1, float power_2) {
+	 feedback.motor_power.resize(2);
         feedback.motor_power[0] = power_1;
         feedback.motor_power[1] = power_2;
         check_feedback();
@@ -107,11 +122,24 @@ class Callbacks : public roboteq::Callbacks {
 
 
   public:
-    Callbacks(ros::Publisher feedback_publisher, ros::Publisher status_publisher) : 
+
+    
+
+Callbacks(ros::Publisher feedback_publisher2, ros::Publisher status_publisher) : 
         feedback_pending(0), 
-        feedback_publisher(feedback_publisher),
+        feedback_publisher(feedback_publisher2),
         status_pending(0),
         status_publisher(status_publisher) {}
+
+/*Callbacks(ros::Publisher status_publisher2, ros::Publisher feedback_publisher2 )
+{
+ 		feedback_pending=0;
+        feedback_publisher=feedback_publisher2;
+        status_pending=0;
+        status_publisher=status_publisher2;
+}*/
+
+
 
     void tick(const ros::TimerEvent&) {
         static uint8_t count = 0;
@@ -143,10 +171,13 @@ int main(int argc, char **argv)
 
     // Message publishers, and the callbacks to receive serial messages from Roboteq.
     Callbacks callbacks(
-            nh.advertise<roboteq_msgs::Status>("status", 1),
-            nh.advertise<roboteq_msgs::Feedback>("feedback", 1));
+            nh.advertise<roboteq_msgs::Feedback>("feedback", 10),
+            nh.advertise<roboteq_msgs::Status>("status", 10));
+	
+	//callbacks.feedback_publisher = nh.advertise<roboteq_msgs::Feedback>("feedback", 10);
+    
 
-    // Timer is 100Hz so that the 10Hz Status messages can be out of phase from
+	// Timer is 100Hz so that the 10Hz Status messages can be out of phase from
     // the 50Hz Feedback messages, and minimize the likelihood of jitter.
     ros::Timer timer = nh.createTimer(ros::Duration(0.01), &Callbacks::tick, &callbacks);
 
