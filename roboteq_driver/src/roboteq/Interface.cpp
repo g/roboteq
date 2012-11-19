@@ -22,35 +22,43 @@ void Interface::connect()
 	string command_Readback="";
 	string version_Readback="";
 	int tries=0;
+	int time_out;
 
 	controllerPort = new LightweightSerial(port_, baud_);
 
-	while(tries<2) {
+	while(tries<5) {
 		if (controllerPort->write_block("?FID\r",5)) {
 		
 			if (controllerPort->is_ok())
 				connected_ = true;
 			else {
 				connected_ = false;
+				ROS_INFO("Bad Connection with serial port Error %s",port_);
                 throw BadConnection(); 
 			}
-
-			while ((int)byteRead!=ASCII_CR_CODE)
+			
+			usleep(100);
+			time_out=0;
+			while (((int)byteRead!=ASCII_CR_CODE)&&(time_out<500))
 			{
 				usleep(100);
 				if (controllerPort->read(&byteRead)) {
 				    command_Readback += byteRead;
 				}
+				time_out++;
 			}
 			byteRead=0;
-			while ((int)byteRead!=ASCII_CR_CODE)
+			time_out=0;
+			while (((int)byteRead!=ASCII_CR_CODE)&&(time_out<500))
 			{	
 				usleep(100);
 				if (controllerPort->read(&byteRead)) {
 						version_Readback += byteRead;
 				}
+				time_out++;
 			}
 			ROS_INFO("CONTROL: Version recieved-->%s",version_Readback.c_str());	
+
 		}	
 		else {
             throw BadConnection();
@@ -61,10 +69,10 @@ void Interface::connect()
 			tries++; 
 		}
 		else
-			tries = 3;
+			tries = 6;
 	}
 	
-	if (version_Readback.length()<2 && tries > 2) { //never got a reply :(
+	if (version_Readback.length()<2 && tries > 5) { //never got a reply :(
 		ROS_INFO("CONTROL: Motor controller not replying");
 		throw BadConnection();
 	}

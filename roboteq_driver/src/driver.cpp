@@ -94,6 +94,10 @@ class Callbacks : public roboteq::Callbacks {
         check_feedback();
     }
 
+    void versionID(string ID) {
+        ROS_INFO("ROBOTEQ: Version recieved-->%s",ID.c_str());
+    }
+
 
     // Status message handlers
 

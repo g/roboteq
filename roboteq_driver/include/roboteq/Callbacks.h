@@ -20,6 +20,7 @@ class Callbacks
     virtual void encoderRPM(uint32_t rpm_1, uint32_t rpm_2) { throw NoHandler(); }
     virtual void motorPower(float power_1, float power_2) { throw NoHandler(); }
     virtual void voltages(float drive, float battery, float analog) { throw NoHandler(); }
+	virtual void versionID(string ID){throw NoHandler();}
 
     /*virtual void logdebug(string s);
     virtual void loginfo(string s);

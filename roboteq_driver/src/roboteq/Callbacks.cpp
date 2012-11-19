@@ -65,7 +65,7 @@ bool Callbacks::call(string code, string fields[])
                 return false;
         }
     } else if (code.compare("FID") == 0) {
-
+		versionID(fields[0]);
     } else if (code.compare("VAR") == 0) {
         //userVariable();
     } else if (code.compare("BA") == 0) {
