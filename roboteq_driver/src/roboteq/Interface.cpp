@@ -120,7 +120,7 @@ bool Interface::readSerial()
 	else
 	{
 		// Call user callback with data.
-		return callbacks_->handle(response);
+	//	return callbacks_->handle(response);
 	}
 }
 
