@@ -114,13 +114,13 @@ bool Interface::readSerial()
 	} 
 	else if (response[0] == '+')
 	{
-		ROS_DEBUG("CONTROL: Query ACKED send>  response:>%s", response.c_str());
+		ROS_INFO("CONTROL: Query ACKED on port %s send>  response:>%s",port_, response.c_str());
 		return true;
 	}
 	else
 	{
 		// Call user callback with data.
-	//	return callbacks_->handle(response);
+		return callbacks_->handle(response);
 	}
 }
 

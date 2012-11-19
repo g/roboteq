@@ -154,7 +154,7 @@ Callbacks(ros::Publisher feedback_publisher2, ros::Publisher status_publisher) :
 
         if (controller->connected()) {
             // Every 2nd count, trigger feedback.
-            if ((count & 1) == 0) request_feedback(); 
+           // if ((count & 1) == 0) request_feedback(); 
 
             // Every 10th count (offset), trigger status.
             if (count == 1) request_status(); 
