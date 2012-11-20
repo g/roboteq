@@ -47,6 +47,11 @@ void Interface::connect()
 				}
 				time_out++;
 			}
+
+            if (time_out>=500)
+            {
+				ROS_INFO("Error Timout while getting ID command readback and connecting to %s",port_);
+            }
 			byteRead=0;
 			time_out=0;
 			while (((int)byteRead!=ASCII_CR_CODE)&&(time_out<500))
@@ -57,7 +62,13 @@ void Interface::connect()
 				}
 				time_out++;
 			}
-			ROS_INFO("CONTROL: Version recieved-->%s",version_Readback.c_str());	
+			if(time_out>=500)
+            {
+				ROS_INFO("Error Timout while reading back ID while connecting to %s",port_);
+                version_Readback="";
+            }
+
+            ROS_INFO("CONTROL Roboteq: Port %s Version recieved-->%s",port_, version_Readback.c_str());	
 
 		}	
 		else {
@@ -90,6 +101,7 @@ bool Interface::readSerial()
 {
 	string response = "";
 	char byteRead = 0;
+    int time_out;
 
 	if (controllerPort->read(&byteRead)) {
 		response += byteRead;
@@ -97,7 +109,8 @@ bool Interface::readSerial()
 		// Nothing to process; exit the function.
 		return false;
 	}
-
+    
+    time_out=0;
 	while ((int)byteRead != ASCII_CR_CODE)
 	{	
 		if (controllerPort->read(&byteRead)) {
@@ -105,16 +118,23 @@ bool Interface::readSerial()
 		} else {
 		    usleep(100);
 		}
+        time_out++;
+
+        if(time_out>500)
+        {
+            ROS_INFO("CONTROL: Timeout Error With Serial Port %s ",port_);
+            break;
+        }
 	}
 
 	if (response[0] == '-')
 	{
-		ROS_WARN("CONTROL: Query error-response:>%s", response.c_str());		
+		ROS_INFO("CONTROL: Query error-response:>%s", response.c_str());		
 		return true;
 	} 
 	else if (response[0] == '+')
 	{
-		ROS_INFO("CONTROL: Query ACKED on port %s send>  response:>%s",port_, response.c_str());
+		ROS_DEBUG("CONTROL: Query ACKED on port %s send>  response:>%s",port_, response.c_str());
 		return true;
 	}
 	else

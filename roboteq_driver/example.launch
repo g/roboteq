@@ -1,7 +1,7 @@
 <launch>
     <node pkg="roboteq_driver" type="driver" name="roboteq" output="screen">
         <rosparam>
-            port: /dev/ttyACM0
+            port: /dev/roboteq/front-right
             baud: 115200
         </rosparam>
     </node>

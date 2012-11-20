@@ -11,6 +11,7 @@
 roboteq::Interface* controller;
 
 
+
 void command_callback(const roboteq_msgs::Command& command)
 {
 	unsigned int i;
@@ -149,12 +150,12 @@ Callbacks(ros::Publisher feedback_publisher2, ros::Publisher status_publisher) :
         static uint8_t count = 0;
 
         if (++count >= 10) {
-            count = 0;
+             count = 0;
         }
 
         if (controller->connected()) {
             // Every 2nd count, trigger feedback.
-           // if ((count & 1) == 0) request_feedback(); 
+            if ((count & 1) == 0) request_feedback(); 
 
             // Every 10th count (offset), trigger status.
             if (count == 1) request_status(); 
