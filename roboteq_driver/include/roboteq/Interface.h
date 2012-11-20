@@ -66,7 +66,8 @@ class Interface {
 	void getStatus() { sendSerial("?FS\r"); }
     void getMotorPower() { sendSerial("?P\r"); }
 	void getPulsedInputs();
-	void getTemperatures();
+	void getDriverTemperature(){sendSerial("?T\r");}
+	void getMotorTemperature(){sendSerial("?AI 3\r");}
 	void getMotorCommanded() { sendSerial("?M\r"); }
 	void getUserVariable() { sendSerial("?VAR\r"); }
 	void getVoltages() { sendSerial("?V\r"); }

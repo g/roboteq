@@ -49,6 +49,7 @@ int32_t Callbacks::to_int(string field)
 
 bool Callbacks::call(string code, string fields[])
 {
+
     // Decide what handler to call. Use a switch for single-character
     // codes, and a cascaded if for the others.
     if (code.length() == 1) {
@@ -60,6 +61,7 @@ bool Callbacks::call(string code, string fields[])
             case 'S': encoderRPM(to_float(fields[0]), to_float(fields[1])); break; 
             case 'P': motorPower(to_float(fields[0]), to_float(fields[1])); break;
             case 'V': voltages(to_float(fields[0]), to_float(fields[1]), to_float(fields[2], 0.001)); break;
+			case 'T':driverTemperature(to_float(fields[0]), to_float(fields[1]), to_float(fields[2]));break;
             default:
                 //ROS_WARN("Unhandled code: %s", code);
                 return false;
@@ -70,7 +72,14 @@ bool Callbacks::call(string code, string fields[])
         //userVariable();
     } else if (code.compare("BA") == 0) {
         supplyCurrent(to_float(fields[0])); 
+	} else if (code.compare("FS") == 0) {
+        controllerStatus(to_int(fields[0]));
+	} else if (code.compare("FF") == 0) {
+        controllerFault(to_int(fields[0])); 
+	} else if (code.compare("AI") == 0) {
+        motorTemperature(to_float(fields[0])); //only getting one  
     } else {
+
         // ROS_WARN("Unhandled code: %s", code)
         return false;
     }

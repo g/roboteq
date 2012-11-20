@@ -21,6 +21,11 @@ class Callbacks
     virtual void motorPower(float power_1, float power_2) { throw NoHandler(); }
     virtual void voltages(float drive, float battery, float analog) { throw NoHandler(); }
 	virtual void versionID(string ID){throw NoHandler();}
+	virtual void controllerStatus(uint8_t c_status){throw NoHandler();}
+	virtual void controllerFault(uint8_t fault){throw NoHandler();}
+	virtual void controllerTemperatue(uint8_t fault){throw NoHandler();}
+	virtual void motorTemperature(float m_temperature){throw NoHandler();}
+	virtual void driverTemperature(float temperature_ic,float temperature_chan1,float temperature_chan2){throw NoHandler();}
 
     /*virtual void logdebug(string s);
     virtual void loginfo(string s);

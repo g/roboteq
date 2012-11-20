@@ -100,22 +100,24 @@ class Callbacks : public roboteq::Callbacks {
     }
 
 
-    // Status message handlers
-
     uint8_t status_pending;
     ros::Publisher status_publisher;
     roboteq_msgs::Status status;
 
     void request_status()
     {
+		
 	    controller->getFault();
 	    controller->getStatus();
-	    //controller->getTemperatures();
+	    controller->getDriverTemperature();
+		controller->getMotorTemperature();
 	    //controller->getDigitalInputs();
-        status_pending = 2;
+ 
+        status_pending = 3;
     } 
 
     void check_status() {
+		//ROS_INFO("pending at %d",status_pending-1);
         if (--status_pending == 0) {
             status_publisher.publish(status);
         } 
@@ -124,6 +126,37 @@ class Callbacks : public roboteq::Callbacks {
     void encoderCount(uint32_t ticks_1, uint32_t ticks_2) { 
         check_status();
     }
+
+    // Status message handlers
+  	void controllerStatus(uint8_t c_status)
+	{
+		status.status=c_status;
+		check_status();
+	}
+	
+	void controllerFault(uint8_t fault)
+	{
+		status.fault=fault;
+		check_status();
+	}
+
+	void motorTemperature(float m_temperature)
+	{
+		//something is wrong with this line?
+		status.motor_temperatures.resize(2);
+		status.motor_temperatures[0]=m_temperature;
+		check_status();
+		
+	}
+
+	void driverTemperature(float temperature_ic,float temperature_chan1,float temperature_chan2)
+	{
+		status.channel_temperature.resize(2); 
+		status.channel_temperature[0]=temperature_chan1;
+		status.channel_temperature[1]=temperature_chan2;
+		status.ic_temperature=temperature_ic;
+		check_status();
+	}
 
 
   public:
