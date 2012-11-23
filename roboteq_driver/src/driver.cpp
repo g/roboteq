@@ -48,7 +48,6 @@ class Callbacks : public roboteq::Callbacks {
 
     void check_feedback() {
         if (--feedback_pending == 0) {
-			//ROS_INFO("Feedback Send %d",feedback_pending);
             feedback_publisher.publish(feedback);
         } 
     }
@@ -142,14 +141,13 @@ class Callbacks : public roboteq::Callbacks {
 
 	void motorTemperature(float m_temperature)
 	{
-		//something is wrong with this line?
-		status.motor_temperatures.resize(2);
-		status.motor_temperatures[0]=m_temperature;
+		status.motor_temperature.resize(2);
+		status.motor_temperature[0]=m_temperature/10;
 		check_status();
 		
 	}
 
-	void driverTemperature(float temperature_ic,float temperature_chan1,float temperature_chan2)
+	void driverTemperature(int temperature_ic,int temperature_chan1,int temperature_chan2)
 	{
 		status.channel_temperature.resize(2); 
 		status.channel_temperature[0]=temperature_chan1;

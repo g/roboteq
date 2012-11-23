@@ -13,10 +13,6 @@
 #define TRUE 1
 #define FALSE 0
 
-#define MCNTRL_PORT_1 "/dev/ttyACM0"
-#define MCNTRL_PORT_2 "/dev/ttyACM1"
-
-
 #define ASCII_CR_CODE 13
 #define ASCII_ACK_CODE 43
 

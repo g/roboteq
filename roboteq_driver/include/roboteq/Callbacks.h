@@ -25,7 +25,7 @@ class Callbacks
 	virtual void controllerFault(uint8_t fault){throw NoHandler();}
 	virtual void controllerTemperatue(uint8_t fault){throw NoHandler();}
 	virtual void motorTemperature(float m_temperature){throw NoHandler();}
-	virtual void driverTemperature(float temperature_ic,float temperature_chan1,float temperature_chan2){throw NoHandler();}
+	virtual void driverTemperature(int temperature_ic,int temperature_chan1,int temperature_chan2){throw NoHandler();}
 
     /*virtual void logdebug(string s);
     virtual void loginfo(string s);
