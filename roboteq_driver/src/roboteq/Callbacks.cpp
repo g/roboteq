@@ -58,7 +58,7 @@ bool Callbacks::call(string code, string fields[])
             case 'E': closedLoopError(to_int(fields[0])); break;
             case 'M': motorCommanded(to_float(fields[0]), to_float(fields[1])); break;
             case 'C': encoderCount(to_float(fields[0]), to_float(fields[1])); break;
-            case 'S': encoderRPM(to_float(fields[0]), to_float(fields[1])); break; 
+            case 'S': encoderRPM(to_int(fields[0]), to_int(fields[1])); break; 
             case 'P': motorPower(to_float(fields[0]), to_float(fields[1])); break;
             case 'V': voltages(to_float(fields[0]), to_float(fields[1]), to_float(fields[2], 0.001)); break;
 	    case 'T': driverTemperature(to_int(fields[0]), to_int(fields[1]), to_int(fields[2]));break;
