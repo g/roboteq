@@ -6,7 +6,7 @@
 #include "roboteq_msgs/Command.h"
 #include "roboteq_msgs/Status.h"
 #include "roboteq_msgs/Feedback.h"
-
+#include "roboteq_msgs/Config.h"
 
 roboteq::Interface* controller;
 
@@ -21,6 +21,18 @@ void command_callback(const roboteq_msgs::Command& command)
 		//set the value of the motors 
 		controller->setSetpoint((i+1), command.setpoint[i]);
 	}
+
+}
+
+
+void config_callback(const roboteq_msgs::Config& config)
+{
+	unsigned int i;
+        for (i=0;i<config.motor_amp_limit.size();i++)
+        {
+		controller->setMotorAmpLimit((i+1), config.motor_amp_limit[i]);
+		ROS_INFO("Set the motor current limit of motor %d to %f",i+1,config.motor_amp_limit[i]);
+        }
 
 }
 
@@ -217,8 +229,9 @@ int main(int argc, char **argv)
     // the 50Hz Feedback messages, and minimize the likelihood of jitter.
     ros::Timer timer = nh.createTimer(ros::Duration(0.01), &Callbacks::tick, &callbacks);
 
-    // Message subscriber.
-    ros::Subscriber sub = nh.subscribe("cmd", 1, command_callback);
+    // Message subscribers.
+    ros::Subscriber sub = nh.subscribe("cmd", 1, command_callback);	
+    ros::Subscriber sub2= nh.subscribe("config",1,config_callback);
 
     // Serial interface to motor controller.
     controller = new roboteq::Interface(port.c_str(), baud, &callbacks);

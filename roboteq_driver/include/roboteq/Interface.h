@@ -8,7 +8,6 @@
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
-#include <pthread.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -30,7 +29,9 @@ class Interface {
 	LightweightSerial *controllerPort;
 	
 	void sendSerial(string strQuery);
-    bool readSerial();
+	int sendSerialBlocking(string strQuery, string response);
+
+    	bool readSerial();
 	std::string last_command_sent_;
 
   public :
@@ -40,6 +41,7 @@ class Interface {
 	bool connected() { return connected_; }
 	void spinOnce();
 
+	
 	void setMotorSpeeds();
 	void resetDIOx(int i);
 	void setDIOx(int i);
@@ -60,13 +62,43 @@ class Interface {
 	void getFeedbackIn();
 	void getFault() { sendSerial("?FF\r"); }
 	void getStatus() { sendSerial("?FS\r"); }
-    void getMotorPower() { sendSerial("?P\r"); }
+	void getMotorPower() { sendSerial("?P\r"); }
 	void getPulsedInputs();
 	void getDriverTemperature(){sendSerial("?T\r");}
 	void getMotorTemperature(){sendSerial("?AI 1\r");}
 	void getMotorCommanded() { sendSerial("?M\r"); }
 	void getUserVariable() { sendSerial("?VAR\r"); }
-	void getVoltages() { sendSerial("?V\r"); }
+	void getVoltages() { sendSerial("?V\r"); } 
+
+	//Configuration Parameters, when writing these values should be confirmed (aka should probably block)
+	
+	int setMotorAmpLimit(float amp_limit);
+	int setMotorAmpLimit(uint8_t channel,float amp_limit);
+	int setPIDICap(uint8_t channel, float pid_cap);
+	int setPIDKi(float ki_1,float ki_2);
+	int setPIDKp(uint8_t channel,float kp);
+	int setPIDkd(float kd_1,float kd_2);
+	int setMaxAcc(float max_acc_1,float max_acc_2);
+	int setMaxAcc(float max_acc);
+	int setMaxDec(float max_dcc);
+	int setMaxDec(float max_dcc_1,float max_dec_2);
+	int setOperatingMode(uint8_t mode_1,uint8_t mode_2);
+	int setMaxPwrFwd(float max_fwd_1,float max_fwd_2);
+	int setMaxPwrFwd(float max_fwd);
+	int setMaxPwrRev(float max_rev_1,float max_rev_2);
+	int setMaxPwrRev(float max_rev_1);
+	int setMaxRPM(uint16_t max_rpm_1,uint16_t max_rpm_2);
+	int setMaxRPM(uint16_t max_rpm);
+	int setOvervoltageLimit(float overvoltage_limit);
+	int setUndervoltageLimit(float undervoltage_limit);
+	int setEncoderPulsePerRev(uint16_t encoder_pulse_per_rev_1,uint16_t encoder_pulse_per_rev_2);
+	int setSerialEcho(bool serial_echo);
+	int setSerialWatchdogTimeout(float wd_timeout);
+	int setAutomaticTelemetry(string telem_request);
+	int writeValuesToEEPROM();
+
+
+	
 };
 
 }
