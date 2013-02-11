@@ -56,7 +56,7 @@ bool Callbacks::call(string code, string fields[])
         switch (code[0]) {
             case 'A': motorCurrent(to_float(fields[0]), to_float(fields[1])); break;
             case 'E': closedLoopError(to_int(fields[0])); break;
-            case 'M': motorCommanded(to_float(fields[0]), to_float(fields[1])); break;
+            case 'M': motorCommanded(to_float(fields[0],10), to_float(fields[1],10)); break;
             case 'C': encoderCount(to_float(fields[0]), to_float(fields[1])); break;
             case 'S': encoderRPM(to_int(fields[0]), to_int(fields[1])); break; 
             case 'P': motorPower(to_float(fields[0]), to_float(fields[1])); break;

@@ -15,6 +15,8 @@
 #define ASCII_CR_CODE 13
 #define ASCII_ACK_CODE 43
 
+#define ROBOTEQ_MAX_SETPOINT 1000 //This is defined by the roboteq software range is from -1000 to +1000
+
 using namespace std;
 
 namespace roboteq {

@@ -17,10 +17,8 @@ class RoboteqDiagnostics():
         rospy.init_node('roboteq_diagnostics')
         self.diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray)
 
-        self.motor_desc = rospy.get_param('motor_desc','Unkown')
+        self.motor_desc = rospy.get_param('~motor_desc','Unknown')
 
-        rospy.Subscriber('/motors/front_left/status', Status, self.HandleSystemStatus)  
-        rospy.Subscriber('/motors/front_left/feedback',Feedback, self.HandleSystemFeedback)
 
         self.last_diagnostics_time = rospy.get_rostime()
 
@@ -33,6 +31,10 @@ class RoboteqDiagnostics():
         self.supply_volt = []
         self.supply_current = []
         self.sys_temp = []
+
+        rospy.Subscriber('status', Status, self.HandleSystemStatus)  
+        rospy.Subscriber('feedback',Feedback, self.HandleSystemFeedback)
+
 
     def publish_diag(self, time):
 
@@ -62,8 +64,6 @@ class RoboteqDiagnostics():
         if self.motor_power:
             diag.status.append(self.motor_power)
 
-
-        print 'publishing diag'
         self.diag_pub.publish(diag)
 
 
@@ -112,7 +112,7 @@ class RoboteqDiagnostics():
         elif status == Status.STATUS_AT_LIMIT:
             self.roboteq_status.level = DiagnosticStatus.ERROR
             self.roboteq_status.message = self.motor_desc + " motor controller is at limit"
-        elif status == Status.MICROBASIC_SCRIPT_RUNNING:
+        elif status == Status.STATUS_MICROBASIC_SCRIPT_RUNNING:
             self.roboteq_status.message = self.motor_desc + " motor controller is running a microbasic script"
 
         self.sys_temp = DiagnosticStatus(name=self.motor_desc + " motor system temperatures(Motor, Channel, Bridge IC)", level = DiagnosticStatus.OK, message = "OK")
@@ -160,7 +160,7 @@ class RoboteqDiagnostics():
             self.motor_current.level = DiagnosticStatus.ERROR
             self.motor_current.message = self.motor_desc + " Motor Current Dangerously High. Reduce torque requirement"
 
-        self.motor_current.values = [KeyValue(self.motor_desc + "Current (A)", str(current))]
+        self.motor_current.values = [KeyValue(self.motor_desc + " Current (A)", str(current))]
 
         #Motor RPM
         self.motor_rpm = DiagnosticStatus(name=self.motor_desc + " Motor RPM", level = DiagnosticStatus.OK, message="OK")
@@ -180,7 +180,7 @@ class RoboteqDiagnostics():
         #Power Input
         self.motor_power = DiagnosticStatus(name=self.motor_desc + " Motor Power", level=DiagnosticStatus.OK, message="OK")
         mot_power = data.motor_power[0]
-        self.motor_power.values = [KeyValue(self.motor_desc + "Motor Power (W)", str(mot_power))]
+        self.motor_power.values = [KeyValue(self.motor_desc + " Motor Power (W)", str(mot_power))]
 
         self.publish_diag(rospy.get_rostime())
 

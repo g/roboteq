@@ -250,7 +250,17 @@ void Interface::setSetpoint(int motor, int val)
 	stringstream stringMotor;
 	stringstream stringVal;
 	stringMotor << motor;
-	stringVal << val;
+	//Bound the input
+    if(val>ROBOTEQ_MAX_SETPOINT)
+    {
+        val=ROBOTEQ_MAX_SETPOINT;
+    }else if(val<-ROBOTEQ_MAX_SETPOINT)
+    {
+        val=-ROBOTEQ_MAX_SETPOINT;
+    }
+    
+    
+    stringVal << val;
 	strCommand="!G " + stringMotor.str() + " " + stringVal.str() +"\r";
 	last_command_sent_=strCommand;
 	sendSerial(strCommand);
@@ -261,7 +271,14 @@ void Interface::setSetpoint(int val)
     // need to redo this one
 	string strCommand;
 	stringstream stringVal;
-	stringVal << val;
+	//Bound the input
+    if(val>ROBOTEQ_MAX_SETPOINT)
+    {
+        val=ROBOTEQ_MAX_SETPOINT;
+    }else if(val<-ROBOTEQ_MAX_SETPOINT)
+    {
+        val=-ROBOTEQ_MAX_SETPOINT;
+    }stringVal << val;
 	strCommand="!G " + stringVal.str() +"\r";
 	sendSerial(strCommand);
 }  // setSetpoint
