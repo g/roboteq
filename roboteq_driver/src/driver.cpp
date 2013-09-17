@@ -11,7 +11,6 @@
 roboteq::Interface* controller;
 
 
-
 void command_callback(const roboteq_msgs::Command& command) {
   unsigned int i;
   for (i=0; i<command.setpoint.size(); i++) {
@@ -19,9 +18,7 @@ void command_callback(const roboteq_msgs::Command& command) {
     //set the value of the motors
     controller->setSetpoint((i+1), command.setpoint[i]);
   }
-
 }
-
 
 void config_callback(const roboteq_msgs::Config& config) {
   unsigned int i;
@@ -29,15 +26,11 @@ void config_callback(const roboteq_msgs::Config& config) {
     controller->setMotorAmpLimit((i+1), config.motor_amp_limit[i]);
     ROS_INFO("Set the motor current limit of motor %d to %f",i+1,config.motor_amp_limit[i]);
   }
-
 }
-
 
 class Callbacks : public roboteq::Callbacks {
 private:
-
   // Feedback message handlers
-
   uint8_t feedback_pending;
 
   roboteq_msgs::Feedback feedback;
@@ -67,12 +60,10 @@ private:
   }
 
   void motorCurrent(float current_1, float current_2) {
-
     feedback.motor_current.resize(2);
     feedback.motor_current[0] = current_1;
     feedback.motor_current[1] = current_2;
     check_feedback();
-
   }
 
   void supplyCurrent(float current) {
@@ -105,19 +96,16 @@ private:
     ROS_INFO("ROBOTEQ: Version recieved-->%s",ID.c_str());
   }
 
-
   uint8_t status_pending;
   ros::Publisher status_publisher;
   roboteq_msgs::Status status;
 
   void request_status() {
-
     controller->getFault();
     controller->getStatus();
     controller->getDriverTemperature();
     controller->getMotorTemperature();
     //controller->getDigitalInputs();
-
     status_pending = 3;
   }
 
@@ -147,7 +135,6 @@ private:
     status.motor_temperature.resize(2);
     status.motor_temperature[0]=m_temperature/10;
     check_status();
-
   }
 
   void driverTemperature(int temperature_ic,int temperature_chan1,int temperature_chan2) {
@@ -158,26 +145,12 @@ private:
     check_status();
   }
 
-
 public:
-
-
-
   Callbacks(ros::Publisher feedback_publisher2, ros::Publisher status_publisher) :
     feedback_pending(0),
     feedback_publisher(feedback_publisher2),
     status_pending(0),
     status_publisher(status_publisher) {}
-
-  /*Callbacks(ros::Publisher status_publisher2, ros::Publisher feedback_publisher2 )
-  {
-   		feedback_pending=0;
-          feedback_publisher=feedback_publisher2;
-          status_pending=0;
-          status_publisher=status_publisher2;
-  }*/
-
-
 
   void tick(const ros::TimerEvent&) {
     static uint8_t count = 0;
@@ -196,7 +169,6 @@ public:
   }
 };
 
-
 int main(int argc, char **argv) {
   ros::init(argc, argv, "~");
   ros::NodeHandle nh("~");
@@ -210,9 +182,7 @@ int main(int argc, char **argv) {
   Callbacks callbacks(
     nh.advertise<roboteq_msgs::Feedback>("feedback", 10),
     nh.advertise<roboteq_msgs::Status>("status", 10));
-
   //callbacks.feedback_publisher = nh.advertise<roboteq_msgs::Feedback>("feedback", 10);
-
 
   // Timer is 100Hz so that the 10Hz Status messages can be out of phase from
   // the 50Hz Feedback messages, and minimize the likelihood of jitter.
@@ -229,7 +199,6 @@ int main(int argc, char **argv) {
     try {
       ROS_DEBUG("Attempting connection to %s at %i.", port.c_str(), baud);
       controller->connect();
-
       while (ros::ok()) {
         // TODO: eliminate this polling in favour of a separate thread for
         // each spinner, or select.
