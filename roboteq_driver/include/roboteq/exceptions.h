@@ -3,16 +3,13 @@
 
 namespace roboteq {
 
-class NoHandler : public std::exception
-{
+class NoHandler : public std::exception {
 };
 
-class BadConnection : public std::exception
-{
+class BadConnection : public std::exception {
 };
 
-class BadTransmission : public std::exception
-{
+class BadTransmission : public std::exception {
 };
 
 }

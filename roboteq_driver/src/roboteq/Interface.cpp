@@ -8,295 +8,257 @@ double last_path_error_callback=0;
 namespace roboteq {
 
 Interface::Interface (const char *port, int baud, Callbacks* callbacks)
-    : callbacks_(callbacks), port_(port), baud_(baud), connected_(false), version_("")
-{
+  : callbacks_(callbacks), port_(port), baud_(baud), connected_(false), version_("") {
 }
 
-Interface::~Interface()
-{
+Interface::~Interface() {
 }
 
-void Interface::connect()
-{
-	char byteRead=0;
-	string command_Readback="";
-	string version_Readback="";
-	int tries=0;
-	int time_out;
+void Interface::connect() {
+  char byteRead=0;
+  string command_Readback="";
+  string version_Readback="";
+  int tries=0;
+  int time_out;
 
-	controllerPort = new LightweightSerial(port_, baud_);
+  controllerPort = new LightweightSerial(port_, baud_);
 
-	while(tries<5) {
-		if (controllerPort->write_block("?FID\r",5)) {
-		
-			if (controllerPort->is_ok())
-				connected_ = true;
-			else {
-				connected_ = false;
-				ROS_INFO("Bad Connection with serial port Error %s",port_);
-                throw BadConnection(); 
-			}
-			
-			usleep(100);
-			time_out=0;
-			while (((int)byteRead!=ASCII_CR_CODE)&&(time_out<500))
-			{
-				usleep(100);
-				if (controllerPort->read(&byteRead)) {
-				    command_Readback += byteRead;
-				}
-				time_out++;
-			}
+  while(tries<5) {
+    if (controllerPort->write_block("?FID\r",5)) {
 
-            if (time_out>=500)
-            {
-				ROS_INFO("Error Timout while getting ID command readback and connecting to %s",port_);
-            }
-			byteRead=0;
-			time_out=0;
-			while (((int)byteRead!=ASCII_CR_CODE)&&(time_out<500))
-			{	
-				usleep(100);
-				if (controllerPort->read(&byteRead)) {
-						version_Readback += byteRead;
-				}
-				time_out++;
-			}
-			if(time_out>=500)
-            {
-				ROS_INFO("Error Timout while reading back ID while connecting to %s",port_);
-                version_Readback="";
-            }
+      if (controllerPort->is_ok())
+        connected_ = true;
+      else {
+        connected_ = false;
+        ROS_INFO("Bad Connection with serial port Error %s",port_);
+        throw BadConnection();
+      }
 
-            ROS_INFO("CONTROL Roboteq: Port %s Version recieved-->%s",port_, version_Readback.c_str());	
+      usleep(100);
+      time_out=0;
+      while (((int)byteRead!=ASCII_CR_CODE)&&(time_out<500)) {
+        usleep(100);
+        if (controllerPort->read(&byteRead)) {
+          command_Readback += byteRead;
+        }
+        time_out++;
+      }
 
-		}	
-		else {
-            throw BadConnection();
-		}
-		
-		if (version_Readback.length()<2) { //system not cleared..try one more time
-			version_Readback="";
-			tries++; 
-		}
-		else
-			tries = 6;
-	}
-	
-	if (version_Readback.length()<2 && tries > 5) { //never got a reply :(
-		ROS_INFO("CONTROL: Motor controller not replying");
-		throw BadConnection();
-	}
+      if (time_out>=500) {
+        ROS_INFO("Error Timout while getting ID command readback and connecting to %s",port_);
+      }
+      byteRead=0;
+      time_out=0;
+      while (((int)byteRead!=ASCII_CR_CODE)&&(time_out<500)) {
+        usleep(100);
+        if (controllerPort->read(&byteRead)) {
+          version_Readback += byteRead;
+        }
+        time_out++;
+      }
+      if(time_out>=500) {
+        ROS_INFO("Error Timout while reading back ID while connecting to %s",port_);
+        version_Readback="";
+      }
+
+      ROS_INFO("CONTROL Roboteq: Port %s Version recieved-->%s",port_, version_Readback.c_str());
+
+    } else {
+      throw BadConnection();
+    }
+
+    if (version_Readback.length()<2) { //system not cleared..try one more time
+      version_Readback="";
+      tries++;
+    } else
+      tries = 6;
+  }
+
+  if (version_Readback.length()<2 && tries > 5) { //never got a reply :(
+    ROS_INFO("CONTROL: Motor controller not replying");
+    throw BadConnection();
+  }
 }
 
 
-void Interface::spinOnce()
-{
-    // Process serial messages until there are no more characters waiting in the buffer.
-    while(readSerial());
+void Interface::spinOnce() {
+  // Process serial messages until there are no more characters waiting in the buffer.
+  while(readSerial());
 }
 
 
-bool Interface::readSerial()
-{
-	string response = "";
-	char byteRead = 0;
-    int time_out;
+bool Interface::readSerial() {
+  string response = "";
+  char byteRead = 0;
+  int time_out;
 
-	if (controllerPort->read(&byteRead)) {
-		response += byteRead;
-	}else{
-		// Nothing to process; exit the function.
-		return false;
-	}
-    
-    time_out=0;
-	while ((int)byteRead != ASCII_CR_CODE)
-	{	
-		if (controllerPort->read(&byteRead)) {
-		    response += byteRead;
-		} else {
-		    usleep(100);
-		}
+  if (controllerPort->read(&byteRead)) {
+    response += byteRead;
+  } else {
+    // Nothing to process; exit the function.
+    return false;
+  }
+
+  time_out=0;
+  while ((int)byteRead != ASCII_CR_CODE) {
+    if (controllerPort->read(&byteRead)) {
+      response += byteRead;
+    } else {
+      usleep(100);
+    }
+    time_out++;
+
+    if(time_out>500) {
+      ROS_INFO("CONTROL: Timeout Error With Serial Port %s ",port_);
+      break;
+    }
+  }
+
+  if (response[0] == '-') {
+    ROS_INFO("CONTROL: Query error-response:>%s", response.c_str());
+    return true;
+  } else if (response[0] == '+') {
+    ROS_DEBUG("CONTROL: Query ACKED on port %s send>  response:>%s",port_, response.c_str());
+    return true;
+  } else {
+    // Call user callback with data.
+    return callbacks_->handle(response);
+  }
+}
+
+
+
+int Interface::sendSerialBlocking(string strQuery,string response) {
+
+  char byteRead = 0;
+  int time_out;
+  int send_retries=0;
+  int read_retries=0;
+  response = "";
+
+  while (response[0] != '+') {
+    if (!controllerPort->write_block(strQuery.c_str(),strQuery.length())) {
+      throw BadTransmission();
+    } else {
+      //Read back the data
+      time_out=0;
+      while ((int)byteRead != ASCII_CR_CODE) {
+        if (controllerPort->read(&byteRead)) {
+          response += byteRead;
+        } else {
+          usleep(100);
+        }
         time_out++;
 
-        if(time_out>500)
-        {
-            ROS_INFO("CONTROL: Timeout Error With Serial Port %s ",port_);
-            break;
+        if(time_out>500) {
+          read_retries++;
+          ROS_INFO("CONTROL: Timeout Error With Serial Port %s sending %s read try #%d",port_,strQuery.c_str(),read_retries);
+          if(read_retries>3) {
+            ROS_ERROR("CONTROL: Timeout Error With Serial Port %s sending %s read try #%d Giving Up",port_,strQuery.c_str(),read_retries);
+            return(-1);
+          }
         }
-	}
+      }
 
-	if (response[0] == '-')
-	{
-		ROS_INFO("CONTROL: Query error-response:>%s", response.c_str());		
-		return true;
-	} 
-	else if (response[0] == '+')
-	{
-		ROS_DEBUG("CONTROL: Query ACKED on port %s send>  response:>%s",port_, response.c_str());
-		return true;
-	}
-	else
-	{
-		// Call user callback with data.
-		return callbacks_->handle(response);
-	}
+      if (response[0] == '-') {
+        ROS_INFO("CONTROL: Query error-response:>%s", response.c_str());
+        //return true;
+      } else if (response[0] == '+') {
+        ROS_DEBUG("CONTROL: Query ACKED on port %s send>  response:>%s",port_, response.c_str());
+        return true;
+      } else if (send_retries>3) {
+        ROS_ERROR("CONTROL: Response Error With Serial Port %s Sent %s on try #%d response %s Giving Up",port_,strQuery.c_str(),read_retries,response.c_str());
+        return (-2);
+      }
+      send_retries++;
+    }
+  }
+  return false;
+}
+
+void Interface::sendSerial(string strQuery) {
+  if (!controllerPort->write_block(strQuery.c_str(),strQuery.length())) {
+    throw BadTransmission();
+  }
 }
 
 
+void Interface::setMotorSpeeds() {
+  string motor_command="";
+  /*stringstream m1_string;
+  stringstream m2_string;
 
-int Interface::sendSerialBlocking(string strQuery,string response)
-{
-
-	char byteRead = 0;
-    	int time_out;
-	int send_retries=0;
-	int read_retries=0; 
-	response = "";
-	
-	while (response[0] != '+')
-	{
-		if (!controllerPort->write_block(strQuery.c_str(),strQuery.length())) {
-			throw BadTransmission();
-		}else{
-			//Read back the data
-			time_out=0;
-			while ((int)byteRead != ASCII_CR_CODE)
-			{	
-				if (controllerPort->read(&byteRead)) {
-					response += byteRead;
-				} else {
-					usleep(100);
-				}
-				time_out++;
-
-				if(time_out>500)
-				{
-					read_retries++;
-					ROS_INFO("CONTROL: Timeout Error With Serial Port %s sending %s read try #%d",port_,strQuery.c_str(),read_retries);
-					if(read_retries>3)
-					{
-						ROS_ERROR("CONTROL: Timeout Error With Serial Port %s sending %s read try #%d Giving Up",port_,strQuery.c_str(),read_retries);
-						return(-1);
-					}
-				}
-			}
-
-			if (response[0] == '-')
-			{
-				ROS_INFO("CONTROL: Query error-response:>%s", response.c_str());		
-				//return true;
-			} 
-			else if (response[0] == '+')
-			{
-				ROS_DEBUG("CONTROL: Query ACKED on port %s send>  response:>%s",port_, response.c_str());
-				return true;
-			}else if (send_retries>3)
-			{
-				ROS_ERROR("CONTROL: Response Error With Serial Port %s Sent %s on try #%d response %s Giving Up",port_,strQuery.c_str(),read_retries,response.c_str());
-				return (-2);
-			}
-			send_retries++;
-		}
-	}
-	return false;
-}
-
-void Interface::sendSerial(string strQuery)
-{
-	if (!controllerPort->write_block(strQuery.c_str(),strQuery.length())) {
-        throw BadTransmission();
-	}
+  m1_string << motor_speed_[0];
+  m2_string << motor_speed_[0];
+  motor_command = "!M " + m1_string.str() + " " + m2_string.str() + "\r";*/
+  sendSerial(motor_command);
 }
 
 
-void Interface::setMotorSpeeds()
-{
-	string motor_command="";
-	/*stringstream m1_string;
-	stringstream m2_string;
-
-	m1_string << motor_speed_[0];
-	m2_string << motor_speed_[0];
-	motor_command = "!M " + m1_string.str() + " " + m2_string.str() + "\r";*/
-	sendSerial(motor_command);
-}
-
-
-void Interface::resetDIOx(int i)
-{
-	string strCommand;
-	stringstream stringID;
-	stringID << i;
-	 strCommand="!D0 " + stringID.str() +"\r";
-	sendSerial(strCommand);
+void Interface::resetDIOx(int i) {
+  string strCommand;
+  stringstream stringID;
+  stringID << i;
+  strCommand="!D0 " + stringID.str() +"\r";
+  sendSerial(strCommand);
 }  // resetDIO
 
-void Interface::setDIOx(int i)	
-{
-    // need to redo this one
-	string strCommand;
-	stringstream stringID;
-	stringID << i;
-	strCommand="!D1 " + stringID.str() +"\r";
-	sendSerial(strCommand);
+void Interface::setDIOx(int i) {
+  // need to redo this one
+  string strCommand;
+  stringstream stringID;
+  stringID << i;
+  strCommand="!D1 " + stringID.str() +"\r";
+  sendSerial(strCommand);
 }  // setDIO
 
-void Interface::setSetpoint(int motor, int val)
-{
-    // need to redo this one
-	string strCommand;
-	stringstream stringMotor;
-	stringstream stringVal;
-	stringMotor << motor;
-	//Bound the input
-    if(val>ROBOTEQ_MAX_SETPOINT)
-    {
-        val=ROBOTEQ_MAX_SETPOINT;
-    }else if(val<-ROBOTEQ_MAX_SETPOINT)
-    {
-        val=-ROBOTEQ_MAX_SETPOINT;
-    }
-    
-    
-    stringVal << val;
-	strCommand="!G " + stringMotor.str() + " " + stringVal.str() +"\r";
-	last_command_sent_=strCommand;
-	sendSerial(strCommand);
+void Interface::setSetpoint(int motor, int val) {
+  // need to redo this one
+  string strCommand;
+  stringstream stringMotor;
+  stringstream stringVal;
+  stringMotor << motor;
+  //Bound the input
+  if(val>ROBOTEQ_MAX_SETPOINT) {
+    val=ROBOTEQ_MAX_SETPOINT;
+  } else if(val<-ROBOTEQ_MAX_SETPOINT) {
+    val=-ROBOTEQ_MAX_SETPOINT;
+  }
+
+
+  stringVal << val;
+  strCommand="!G " + stringMotor.str() + " " + stringVal.str() +"\r";
+  last_command_sent_=strCommand;
+  sendSerial(strCommand);
 }  // setSetpoint
 
-void Interface::setSetpoint(int val)
-{
-    // need to redo this one
-	string strCommand;
-	stringstream stringVal;
-	//Bound the input
-    if(val>ROBOTEQ_MAX_SETPOINT)
-    {
-        val=ROBOTEQ_MAX_SETPOINT;
-    }else if(val<-ROBOTEQ_MAX_SETPOINT)
-    {
-        val=-ROBOTEQ_MAX_SETPOINT;
-    }stringVal << val;
-	strCommand="!G " + stringVal.str() +"\r";
-	sendSerial(strCommand);
+void Interface::setSetpoint(int val) {
+  // need to redo this one
+  string strCommand;
+  stringstream stringVal;
+  //Bound the input
+  if(val>ROBOTEQ_MAX_SETPOINT) {
+    val=ROBOTEQ_MAX_SETPOINT;
+  } else if(val<-ROBOTEQ_MAX_SETPOINT) {
+    val=-ROBOTEQ_MAX_SETPOINT;
+  }
+  stringVal << val;
+  strCommand="!G " + stringVal.str() +"\r";
+  sendSerial(strCommand);
 }  // setSetpoint
 
-void Interface::setEstop()
-{
-    // need to redo this one
-	string strCommand;
-	strCommand="!EX \r";
-	sendSerial(strCommand);
+void Interface::setEstop() {
+  // need to redo this one
+  string strCommand;
+  strCommand="!EX \r";
+  sendSerial(strCommand);
 }  // setEstop
 
-void Interface::resetEstop()
-{
-    // need to redo this one
-	string strCommand;
-	strCommand="!MG \r";
-	sendSerial(strCommand);
+void Interface::resetEstop() {
+  // need to redo this one
+  string strCommand;
+  strCommand="!MG \r";
+  sendSerial(strCommand);
 }
 
 /*void Interface::setVAR(int i, int val)
@@ -324,399 +286,352 @@ void Interface::readVAR(int i)
 }  // readVAR
 */
 
-int Interface::setMotorAmpLimit(uint8_t channel,float amp_limit)
-{
-	string response="";
-	string command;
-	stringstream value;
-	stringstream channel_sel;
-	channel_sel<<channel;
-	value<<amp_limit*10;
-	command="^ALIM "+ channel_sel.str() + " " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the Amp limit %d to %f ",channel,amp_limit);	
-		return false;
-	}
-	ROS_INFO("Set the amp limit on motor %d to %f",channel,amp_limit*10);
-		return true;
+int Interface::setMotorAmpLimit(uint8_t channel,float amp_limit) {
+  string response="";
+  string command;
+  stringstream value;
+  stringstream channel_sel;
+  channel_sel<<channel;
+  value<<amp_limit*10;
+  command="^ALIM "+ channel_sel.str() + " " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the Amp limit %d to %f ",channel,amp_limit);
+    return false;
+  }
+  ROS_INFO("Set the amp limit on motor %d to %f",channel,amp_limit*10);
+  return true;
 }
 
 
-int Interface::setMotorAmpLimit(float amp_limit)
-{
-	string response="";
-	string command;
-	stringstream value;
-	value<<amp_limit*10;
-	command="^ALIM " + value.str() + "\r";	
-	if(sendSerialBlocking(command,response))
-	{
-			return true;
-	}
-		ROS_WARN("Failed to set the motor amp limit to %f ",amp_limit);
-		return false;
+int Interface::setMotorAmpLimit(float amp_limit) {
+  string response="";
+  string command;
+  stringstream value;
+  value<<amp_limit*10;
+  command="^ALIM " + value.str() + "\r";
+  if(sendSerialBlocking(command,response)) {
+    return true;
+  }
+  ROS_WARN("Failed to set the motor amp limit to %f ",amp_limit);
+  return false;
 }
 
-int Interface::setPIDICap(uint8_t channel,float pid_cap)
-{
-	string response="";
-	string command;
-	stringstream value;
-	stringstream channel_sel;
-	channel_sel<<channel;
-	value<<pid_cap*100;
-	command="^ICAP "+ channel_sel.str()+ " " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the PID Cap limit %d to %f ",channel,pid_cap);	
-		return false;
-		
-	}
-	/*value<<pid_cap_2*100;
-	command="^ICAP 2 " + value.str() + "\r";
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the PID Cap limit 2 to %f ",pid_cap_2);	
-		return false;
-		
-	}*/
-		
-		return true;
+int Interface::setPIDICap(uint8_t channel,float pid_cap) {
+  string response="";
+  string command;
+  stringstream value;
+  stringstream channel_sel;
+  channel_sel<<channel;
+  value<<pid_cap*100;
+  command="^ICAP "+ channel_sel.str()+ " " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the PID Cap limit %d to %f ",channel,pid_cap);
+    return false;
+
+  }
+  /*value<<pid_cap_2*100;
+  command="^ICAP 2 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response))
+  {
+  	ROS_WARN("Failed to set the PID Cap limit 2 to %f ",pid_cap_2);
+  	return false;
+
+  }*/
+
+  return true;
 }
 
-int Interface::setPIDKi(float ki_1,float ki_2)
-{
-	string response="";
-	string command;
-	stringstream value;
-	value<<ki_1*10;
-	command="^KI 1 " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the Ki for channel 1 to %f ",ki_1);	
-		return false;
-		
-	}
-	value<<ki_2*10;
-	command="^KI 2 " + value.str() + "\r";
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the Ki for channel 2 to %f ",ki_2);	
-		return false;
-		
-	}
-		
-		return true;
+int Interface::setPIDKi(float ki_1,float ki_2) {
+  string response="";
+  string command;
+  stringstream value;
+  value<<ki_1*10;
+  command="^KI 1 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the Ki for channel 1 to %f ",ki_1);
+    return false;
+
+  }
+  value<<ki_2*10;
+  command="^KI 2 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the Ki for channel 2 to %f ",ki_2);
+    return false;
+
+  }
+
+  return true;
 }
 
-int Interface::setPIDKp(uint8_t channel,float kp)
-{
-	string response="";
-	string command;
-	stringstream value;
-	stringstream channel_sel;
-	channel_sel<<channel;
-	value<<kp*10;
-	command="^KP "+ channel_sel.str() + " " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the Kp for channel %d to %f ",channel,kp);	
-		return false;
-		
-	}
-	return true;
+int Interface::setPIDKp(uint8_t channel,float kp) {
+  string response="";
+  string command;
+  stringstream value;
+  stringstream channel_sel;
+  channel_sel<<channel;
+  value<<kp*10;
+  command="^KP "+ channel_sel.str() + " " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the Kp for channel %d to %f ",channel,kp);
+    return false;
+
+  }
+  return true;
 }
 
-int Interface::setPIDkd(float kd_1,float kd_2)
-{
-	string response="";
-	string command;
-	stringstream value;
-	value<<kd_1*10;
-	command="^KD 1 " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the Kd for channel 1 to %f ",kd_1);	
-		return false;
-		
-	}
-	value<<kd_2*10;
-	command="^KD 2 " + value.str() + "\r";
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the Kd for channel 2 to %f ",kd_2);	
-		return false;
-		
-	}
-		
-		return true;
+int Interface::setPIDkd(float kd_1,float kd_2) {
+  string response="";
+  string command;
+  stringstream value;
+  value<<kd_1*10;
+  command="^KD 1 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the Kd for channel 1 to %f ",kd_1);
+    return false;
+
+  }
+  value<<kd_2*10;
+  command="^KD 2 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the Kd for channel 2 to %f ",kd_2);
+    return false;
+
+  }
+
+  return true;
 }
 
-int Interface::setMaxAcc(float max_acc_1,float max_acc_2)
-{
-	string response="";
-	string command;
-	stringstream value;
-	value<<max_acc_1*10;
-	command="^MAC 1 " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the max acceleration for channel 1 to %f ",max_acc_1);	
-		return false;
-		
-	}
-	value<<max_acc_2*10;
-	command="^MAC 2 " + value.str() + "\r";
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the max acceleration for channel 2 to %f ",max_acc_2);	
-		return false;
-		
-	}
-		
-		return true;
+int Interface::setMaxAcc(float max_acc_1,float max_acc_2) {
+  string response="";
+  string command;
+  stringstream value;
+  value<<max_acc_1*10;
+  command="^MAC 1 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the max acceleration for channel 1 to %f ",max_acc_1);
+    return false;
+
+  }
+  value<<max_acc_2*10;
+  command="^MAC 2 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the max acceleration for channel 2 to %f ",max_acc_2);
+    return false;
+
+  }
+
+  return true;
 }
 
-int Interface::setMaxDec(float max_dcc_1,float max_dcc_2)
-{
-	string response="";
-	string command;
-	stringstream value;
-	value<<max_dcc_1*10;
-	command="^MDEC 1 " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the max deceleration for channel 1 to %f ",max_dcc_1);	
-		return false;
-		
-	}
-	value<<max_dcc_2*10;
-	command="^MDEC 2 " + value.str() + "\r";
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the max deceleration for channel 2 to %f ",max_dcc_2);	
-		return false;
-		
-	}
-		
-		return true;
+int Interface::setMaxDec(float max_dcc_1,float max_dcc_2) {
+  string response="";
+  string command;
+  stringstream value;
+  value<<max_dcc_1*10;
+  command="^MDEC 1 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the max deceleration for channel 1 to %f ",max_dcc_1);
+    return false;
+
+  }
+  value<<max_dcc_2*10;
+  command="^MDEC 2 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the max deceleration for channel 2 to %f ",max_dcc_2);
+    return false;
+
+  }
+
+  return true;
 }
 
-int Interface::setOperatingMode(uint8_t mode_1, uint8_t mode_2)
-{
-	string response="";
-	string command;
-	stringstream value;
-	value<<mode_1*10;
-	command="^MMOD 1 " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the mode to %d ",mode_1);	
-		return false;
-		
-	}
-	value<<mode_2*10;
-	command="^MMOD 2 " + value.str() + "\r";
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the mode to %d ",mode_2);	
-		return false;
-		
-	}
-		
-		return true;
+int Interface::setOperatingMode(uint8_t mode_1, uint8_t mode_2) {
+  string response="";
+  string command;
+  stringstream value;
+  value<<mode_1*10;
+  command="^MMOD 1 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the mode to %d ",mode_1);
+    return false;
+
+  }
+  value<<mode_2*10;
+  command="^MMOD 2 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the mode to %d ",mode_2);
+    return false;
+
+  }
+
+  return true;
 }
 
 
 //this is not needed....
-int Interface::setMaxPwrFwd(float max_fwd_1,float max_fwd_2)
-{
-	string response="";
-	string command;
-	stringstream value;
-	value<<max_fwd_1*100;
-	command="^MXPF 1 " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the max power forward to %f ",max_fwd_1);	
-		return false;
-		
-	}
-	value<<max_fwd_2*100;
-	command="^MXPF 2 " + value.str() + "\r";
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the max power forward to %f ",max_fwd_2);	
-		return false;
-		
-	}
-		
-		return true;
+int Interface::setMaxPwrFwd(float max_fwd_1,float max_fwd_2) {
+  string response="";
+  string command;
+  stringstream value;
+  value<<max_fwd_1*100;
+  command="^MXPF 1 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the max power forward to %f ",max_fwd_1);
+    return false;
+
+  }
+  value<<max_fwd_2*100;
+  command="^MXPF 2 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the max power forward to %f ",max_fwd_2);
+    return false;
+
+  }
+
+  return true;
 }
 
-int Interface::setMaxPwrRev(float max_rev_1,float max_rev_2)
-{
-	string response="";
-	string command;
-	stringstream value;
-	value<<max_rev_1*100;
-	command="^MXPR 1 " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the max power reverse to %f ",max_rev_1);	
-		return false;
-		
-	}
-	value<<max_rev_2*100;
-	command="^MXPR 2 " + value.str() + "\r";
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the max power reverse to %f ",max_rev_2);	
-		return false;
-		
-	}
-		
-		return true;
+int Interface::setMaxPwrRev(float max_rev_1,float max_rev_2) {
+  string response="";
+  string command;
+  stringstream value;
+  value<<max_rev_1*100;
+  command="^MXPR 1 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the max power reverse to %f ",max_rev_1);
+    return false;
+
+  }
+  value<<max_rev_2*100;
+  command="^MXPR 2 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the max power reverse to %f ",max_rev_2);
+    return false;
+
+  }
+
+  return true;
 }
 
 
-int Interface::setMaxRPM(uint16_t max_rpm_1,uint16_t max_rpm_2)
-{
-	string response="";
-	string command;
-	stringstream value;
-	value<<max_rpm_1;
-	command="^MRPM 1 " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the Max RPM to %d ",max_rpm_1);	
-		return false;
-		
-	}
-	value<<max_rpm_2;
-	command="^MRPM 2 " + value.str() + "\r";
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the Max RPM to %d ",max_rpm_2);	
-		return false;
-		
-	}
-		
-		return true;
+int Interface::setMaxRPM(uint16_t max_rpm_1,uint16_t max_rpm_2) {
+  string response="";
+  string command;
+  stringstream value;
+  value<<max_rpm_1;
+  command="^MRPM 1 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the Max RPM to %d ",max_rpm_1);
+    return false;
+
+  }
+  value<<max_rpm_2;
+  command="^MRPM 2 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the Max RPM to %d ",max_rpm_2);
+    return false;
+
+  }
+
+  return true;
 }
 
-int Interface::setOvervoltageLimit(float overvoltage_limit)
-{
-	string response="";
-	string command;
-	stringstream value;
-	value<<overvoltage_limit*10;
-	command="^OVL " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the Overvoltage limit to %f ",overvoltage_limit);	
-		return false;
-	}
-		return true;
+int Interface::setOvervoltageLimit(float overvoltage_limit) {
+  string response="";
+  string command;
+  stringstream value;
+  value<<overvoltage_limit*10;
+  command="^OVL " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the Overvoltage limit to %f ",overvoltage_limit);
+    return false;
+  }
+  return true;
 }
 
-int Interface::setUndervoltageLimit(float undervoltage_limit)
-{
-	string response="";
-	string command;
-	stringstream value;
-	value<<undervoltage_limit*10;
-	command="^UVL " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the Undervoltage limit to %f ",undervoltage_limit);	
-		return false;
-	}
-		return true;
+int Interface::setUndervoltageLimit(float undervoltage_limit) {
+  string response="";
+  string command;
+  stringstream value;
+  value<<undervoltage_limit*10;
+  command="^UVL " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the Undervoltage limit to %f ",undervoltage_limit);
+    return false;
+  }
+  return true;
 }
 
-int Interface::setEncoderPulsePerRev(uint16_t encoder_pulse_per_rev_1,uint16_t encoder_pulse_per_rev_2)
-{
-	string response="";
-	string command;
-	stringstream value;
-	value<<encoder_pulse_per_rev_1;
-	command="^EPPR 1 " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the Encoder pullse per revolutin PPR Channel 1 Value to %d ",encoder_pulse_per_rev_1);	
-		return false;
-	}
-	value<<encoder_pulse_per_rev_2;
-	command="^EPPR 2 " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the Encoder pullse per revolutin PPR Channel 2 Value to %d ",encoder_pulse_per_rev_2);	
-		return false;
-	}
-		return true;
+int Interface::setEncoderPulsePerRev(uint16_t encoder_pulse_per_rev_1,uint16_t encoder_pulse_per_rev_2) {
+  string response="";
+  string command;
+  stringstream value;
+  value<<encoder_pulse_per_rev_1;
+  command="^EPPR 1 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the Encoder pullse per revolutin PPR Channel 1 Value to %d ",encoder_pulse_per_rev_1);
+    return false;
+  }
+  value<<encoder_pulse_per_rev_2;
+  command="^EPPR 2 " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the Encoder pullse per revolutin PPR Channel 2 Value to %d ",encoder_pulse_per_rev_2);
+    return false;
+  }
+  return true;
 }
 
 
-int Interface::setSerialEcho(bool serial_echo)
-{
-	string response="";
-	string command;
-	stringstream value;
-	value<<serial_echo;
-	command="^ECHOF " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		if(serial_echo)
-			ROS_WARN("Failed to set the Serial Echo to 1 ");
-		else
-			ROS_WARN("Failed to set the Serial Echo to 0 ");
-	
-		return false;
-	}
-		return true;
+int Interface::setSerialEcho(bool serial_echo) {
+  string response="";
+  string command;
+  stringstream value;
+  value<<serial_echo;
+  command="^ECHOF " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    if(serial_echo)
+      ROS_WARN("Failed to set the Serial Echo to 1 ");
+    else
+      ROS_WARN("Failed to set the Serial Echo to 0 ");
+
+    return false;
+  }
+  return true;
 }
 
-int Interface::setSerialWatchdogTimeout(float wd_timeout)
-{
-	string response="";
-	string command;
-	stringstream value;
-	value<<wd_timeout*1000;
-	command="^RWD " + value.str() + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the serial timeout to %f seconds", wd_timeout);	
-		return false;
-	}
-		return true;
+int Interface::setSerialWatchdogTimeout(float wd_timeout) {
+  string response="";
+  string command;
+  stringstream value;
+  value<<wd_timeout*1000;
+  command="^RWD " + value.str() + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the serial timeout to %f seconds", wd_timeout);
+    return false;
+  }
+  return true;
 }
 
-int Interface::setAutomaticTelemetry(string telem_request)
-{
-	string response="";
-	string command;
-	command="^TELS " + telem_request + "\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to set the telemetry string to %s", telem_request.c_str());	
-		return false;
-	}
-		return true;
+int Interface::setAutomaticTelemetry(string telem_request) {
+  string response="";
+  string command;
+  command="^TELS " + telem_request + "\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to set the telemetry string to %s", telem_request.c_str());
+    return false;
+  }
+  return true;
 }
 
-int Interface::writeValuesToEEPROM()
-{
-	string response="";
-	string command;
-	command="%EESAV\r";	
-	if(!sendSerialBlocking(command,response))
-	{
-		ROS_WARN("Failed to save settings in RRPROM");	
-		return false;
-	}
-		return true;
+int Interface::writeValuesToEEPROM() {
+  string response="";
+  string command;
+  command="%EESAV\r";
+  if(!sendSerialBlocking(command,response)) {
+    ROS_WARN("Failed to save settings in RRPROM");
+    return false;
+  }
+  return true;
 }
 
 
