@@ -23,31 +23,32 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "roboteq/Callbacks.h"
-#include <stdlib.h>
+#include "roboteq_driver/Callbacks.h"
+
 #include "ros/ros.h"
+
+#include <stdlib.h>
 
 namespace roboteq {
 
-
-bool Callbacks::handle(string response) {
+bool Callbacks::handle(std::string response) {
   //  ROS_INFO("Response: %s", response.c_str());
 
   size_t equals_sign = response.find("=");
-  if (equals_sign == string::npos) {
+  if (equals_sign == std::string::npos) {
     // Line which includes no data.
     return false;
   }
-  string code = response.substr(0, equals_sign);
+  std::string code = response.substr(0, equals_sign);
 
   // Split up response into multiple fields.
   response = response.substr(equals_sign + 1);
   size_t delimiter = 0;
   uint8_t i = 0;
-  string fields[20];
-  while (delimiter != string::npos) {
+  std::string fields[20];
+  while (delimiter != std::string::npos) {
     delimiter = response.find(":");
-    string field = response.substr(0, delimiter).c_str();
+    std::string field = response.substr(0, delimiter).c_str();
     // ROS_INFO("  field[%d] = %s \n", i, field.c_str());
     fields[i++] = field;
     response = response.substr(delimiter + 1);
@@ -57,16 +58,16 @@ bool Callbacks::handle(string response) {
   return call(code, fields);
 }
 
-float Callbacks::to_float(string field, float scale) {
+float Callbacks::to_float(std::string field, float scale) {
   return atoi(field.c_str()) * scale;
 }
 
-int32_t Callbacks::to_int(string field) {
+int32_t Callbacks::to_int(std::string field) {
   return atoi(field.c_str());
 }
 
 
-bool Callbacks::call(string code, string fields[]) {
+bool Callbacks::call(std::string code, std::string fields[]) {
 
   // Decide what handler to call. Use a switch for single-character
   // codes, and a cascaded if for the others.

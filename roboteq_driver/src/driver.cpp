@@ -22,9 +22,9 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSE
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "roboteq/Interface.h"
-#include "roboteq/Callbacks.h"
-#include "roboteq/exceptions.h"
+#include "roboteq_driver/Interface.h"
+#include "roboteq_driver/Callbacks.h"
+#include "roboteq_driver/exceptions.h"
 
 #include "ros/ros.h"
 #include "roboteq_msgs/Command.h"
@@ -116,7 +116,7 @@ private:
     check_feedback();
   }
 
-  void versionID(string ID) {
+  void versionID(std::string ID) {
     ROS_INFO("ROBOTEQ: Version recieved-->%s",ID.c_str());
   }
 
@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
   ros::init(argc, argv, "~");
   ros::NodeHandle nh("~");
 
-  string port;
+  std::string port;
   int32_t baud;
   nh.param<std::string>("port", port, "/dev/ttyACM0");
   nh.param<int32_t>("baud", baud, 115200);

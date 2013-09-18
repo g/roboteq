@@ -25,11 +25,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ROBOTEQ_CALLBACKS
 #define ROBOTEQ_CALLBACKS
 
+#include "roboteq_driver/exceptions.h"
+
 #include <stdint.h>
 #include <string>
-#include <roboteq/exceptions.h>
-
-using namespace std;
 
 namespace roboteq {
 
@@ -59,7 +58,7 @@ private:
   virtual void voltages(float drive, float battery, float analog) {
     throw NoHandler();
   }
-  virtual void versionID(string ID) {
+  virtual void versionID(std::string ID) {
     throw NoHandler();
   }
   virtual void controllerStatus(uint8_t c_status) {
@@ -83,12 +82,12 @@ private:
   virtual void logwarn(string s);*/
 
   // Internal helper functions
-  bool call(string code, string fields[]);
-  static float to_float(string field, float scale=0.1);
-  static int32_t to_int(string field);
+  bool call(std::string code, std::string fields[]);
+  static float to_float(std::string field, float scale=0.1);
+  static int32_t to_int(std::string field);
 
 public:
-  bool handle(string);
+  bool handle(std::string);
 };
 
 }

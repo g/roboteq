@@ -25,6 +25,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ROBOTEQ_EXCEPTIONS
 #define ROBOTEQ_EXCEPTIONS
 
+#include <exception>
+
 namespace roboteq {
 
 class NoHandler : public std::exception {

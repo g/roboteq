@@ -20,13 +20,11 @@
 # SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import roslib; roslib.load_manifest('roboteq_driver')
-import rospy
 
+import rospy
 
 from roboteq_msgs.msg import Feedback, Status
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
-
 
 MOTOR_OVERCURRENT = 160
 MOTOR_OVERTEMP = 70
@@ -39,7 +37,6 @@ class RoboteqDiagnostics():
         self.diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray)
 
         self.motor_desc = rospy.get_param('~motor_desc','Unknown')
-
 
         self.last_diagnostics_time = rospy.get_rostime()
 

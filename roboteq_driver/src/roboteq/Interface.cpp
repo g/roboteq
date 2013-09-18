@@ -22,10 +22,16 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSE
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#include "roboteq/Interface.h"
-#include "roboteq/Callbacks.h"
-#include "roboteq/exceptions.h"
+#include "roboteq_driver/Interface.h"
 
+#include "roboteq_driver/Callbacks.h"
+#include "roboteq_driver/lightweightserial.h"
+
+#include "ros/ros.h"
+
+#include <unistd.h>
+#include <iostream>
+#include <sstream>
 
 double last_path_error_callback=0;
 
@@ -33,6 +39,7 @@ namespace roboteq {
 
 Interface::Interface (const char *port, int baud, Callbacks* callbacks)
   : callbacks_(callbacks), port_(port), baud_(baud), connected_(false), version_("") {
+    class Callbacks;
 }
 
 Interface::~Interface() {
@@ -40,8 +47,8 @@ Interface::~Interface() {
 
 void Interface::connect() {
   char byteRead=0;
-  string command_Readback="";
-  string version_Readback="";
+  std::string command_Readback="";
+  std::string version_Readback="";
   int tries=0;
   int time_out;
 
@@ -112,7 +119,7 @@ void Interface::spinOnce() {
 
 
 bool Interface::readSerial() {
-  string response = "";
+  std::string response = "";
   char byteRead = 0;
   int time_out;
 
@@ -152,7 +159,7 @@ bool Interface::readSerial() {
 
 
 
-int Interface::sendSerialBlocking(string strQuery,string response) {
+int Interface::sendSerialBlocking(std::string strQuery,std::string response) {
 
   char byteRead = 0;
   int time_out;
@@ -200,7 +207,7 @@ int Interface::sendSerialBlocking(string strQuery,string response) {
   return false;
 }
 
-void Interface::sendSerial(string strQuery) {
+void Interface::sendSerial(std::string strQuery) {
   if (!controllerPort->write_block(strQuery.c_str(),strQuery.length())) {
     throw BadTransmission();
   }
@@ -208,7 +215,7 @@ void Interface::sendSerial(string strQuery) {
 
 
 void Interface::setMotorSpeeds() {
-  string motor_command="";
+  std::string motor_command="";
   /*stringstream m1_string;
   stringstream m2_string;
 
@@ -220,8 +227,8 @@ void Interface::setMotorSpeeds() {
 
 
 void Interface::resetDIOx(int i) {
-  string strCommand;
-  stringstream stringID;
+  std::string strCommand;
+  std::stringstream stringID;
   stringID << i;
   strCommand="!D0 " + stringID.str() +"\r";
   sendSerial(strCommand);
@@ -229,8 +236,8 @@ void Interface::resetDIOx(int i) {
 
 void Interface::setDIOx(int i) {
   // need to redo this one
-  string strCommand;
-  stringstream stringID;
+  std::string strCommand;
+  std::stringstream stringID;
   stringID << i;
   strCommand="!D1 " + stringID.str() +"\r";
   sendSerial(strCommand);
@@ -238,9 +245,9 @@ void Interface::setDIOx(int i) {
 
 void Interface::setSetpoint(int motor, int val) {
   // need to redo this one
-  string strCommand;
-  stringstream stringMotor;
-  stringstream stringVal;
+  std::string strCommand;
+  std::stringstream stringMotor;
+  std::stringstream stringVal;
   stringMotor << motor;
   //Bound the input
   if(val>ROBOTEQ_MAX_SETPOINT) {
@@ -258,8 +265,8 @@ void Interface::setSetpoint(int motor, int val) {
 
 void Interface::setSetpoint(int val) {
   // need to redo this one
-  string strCommand;
-  stringstream stringVal;
+  std::string strCommand;
+  std::stringstream stringVal;
   //Bound the input
   if(val>ROBOTEQ_MAX_SETPOINT) {
     val=ROBOTEQ_MAX_SETPOINT;
@@ -273,14 +280,14 @@ void Interface::setSetpoint(int val) {
 
 void Interface::setEstop() {
   // need to redo this one
-  string strCommand;
+  std::string strCommand;
   strCommand="!EX \r";
   sendSerial(strCommand);
 }  // setEstop
 
 void Interface::resetEstop() {
   // need to redo this one
-  string strCommand;
+  std::string strCommand;
   strCommand="!MG \r";
   sendSerial(strCommand);
 }
@@ -311,10 +318,10 @@ void Interface::readVAR(int i)
 */
 
 int Interface::setMotorAmpLimit(uint8_t channel,float amp_limit) {
-  string response="";
-  string command;
-  stringstream value;
-  stringstream channel_sel;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
+  std::stringstream channel_sel;
   channel_sel<<channel;
   value<<amp_limit*10;
   command="^ALIM "+ channel_sel.str() + " " + value.str() + "\r";
@@ -328,9 +335,9 @@ int Interface::setMotorAmpLimit(uint8_t channel,float amp_limit) {
 
 
 int Interface::setMotorAmpLimit(float amp_limit) {
-  string response="";
-  string command;
-  stringstream value;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
   value<<amp_limit*10;
   command="^ALIM " + value.str() + "\r";
   if(sendSerialBlocking(command,response)) {
@@ -341,10 +348,10 @@ int Interface::setMotorAmpLimit(float amp_limit) {
 }
 
 int Interface::setPIDICap(uint8_t channel,float pid_cap) {
-  string response="";
-  string command;
-  stringstream value;
-  stringstream channel_sel;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
+  std::stringstream channel_sel;
   channel_sel<<channel;
   value<<pid_cap*100;
   command="^ICAP "+ channel_sel.str()+ " " + value.str() + "\r";
@@ -366,9 +373,9 @@ int Interface::setPIDICap(uint8_t channel,float pid_cap) {
 }
 
 int Interface::setPIDKi(float ki_1,float ki_2) {
-  string response="";
-  string command;
-  stringstream value;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
   value<<ki_1*10;
   command="^KI 1 " + value.str() + "\r";
   if(!sendSerialBlocking(command,response)) {
@@ -388,10 +395,10 @@ int Interface::setPIDKi(float ki_1,float ki_2) {
 }
 
 int Interface::setPIDKp(uint8_t channel,float kp) {
-  string response="";
-  string command;
-  stringstream value;
-  stringstream channel_sel;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
+  std::stringstream channel_sel;
   channel_sel<<channel;
   value<<kp*10;
   command="^KP "+ channel_sel.str() + " " + value.str() + "\r";
@@ -404,9 +411,9 @@ int Interface::setPIDKp(uint8_t channel,float kp) {
 }
 
 int Interface::setPIDkd(float kd_1,float kd_2) {
-  string response="";
-  string command;
-  stringstream value;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
   value<<kd_1*10;
   command="^KD 1 " + value.str() + "\r";
   if(!sendSerialBlocking(command,response)) {
@@ -426,9 +433,9 @@ int Interface::setPIDkd(float kd_1,float kd_2) {
 }
 
 int Interface::setMaxAcc(float max_acc_1,float max_acc_2) {
-  string response="";
-  string command;
-  stringstream value;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
   value<<max_acc_1*10;
   command="^MAC 1 " + value.str() + "\r";
   if(!sendSerialBlocking(command,response)) {
@@ -448,9 +455,9 @@ int Interface::setMaxAcc(float max_acc_1,float max_acc_2) {
 }
 
 int Interface::setMaxDec(float max_dcc_1,float max_dcc_2) {
-  string response="";
-  string command;
-  stringstream value;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
   value<<max_dcc_1*10;
   command="^MDEC 1 " + value.str() + "\r";
   if(!sendSerialBlocking(command,response)) {
@@ -470,9 +477,9 @@ int Interface::setMaxDec(float max_dcc_1,float max_dcc_2) {
 }
 
 int Interface::setOperatingMode(uint8_t mode_1, uint8_t mode_2) {
-  string response="";
-  string command;
-  stringstream value;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
   value<<mode_1*10;
   command="^MMOD 1 " + value.str() + "\r";
   if(!sendSerialBlocking(command,response)) {
@@ -494,9 +501,9 @@ int Interface::setOperatingMode(uint8_t mode_1, uint8_t mode_2) {
 
 //this is not needed....
 int Interface::setMaxPwrFwd(float max_fwd_1,float max_fwd_2) {
-  string response="";
-  string command;
-  stringstream value;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
   value<<max_fwd_1*100;
   command="^MXPF 1 " + value.str() + "\r";
   if(!sendSerialBlocking(command,response)) {
@@ -516,9 +523,9 @@ int Interface::setMaxPwrFwd(float max_fwd_1,float max_fwd_2) {
 }
 
 int Interface::setMaxPwrRev(float max_rev_1,float max_rev_2) {
-  string response="";
-  string command;
-  stringstream value;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
   value<<max_rev_1*100;
   command="^MXPR 1 " + value.str() + "\r";
   if(!sendSerialBlocking(command,response)) {
@@ -539,9 +546,9 @@ int Interface::setMaxPwrRev(float max_rev_1,float max_rev_2) {
 
 
 int Interface::setMaxRPM(uint16_t max_rpm_1,uint16_t max_rpm_2) {
-  string response="";
-  string command;
-  stringstream value;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
   value<<max_rpm_1;
   command="^MRPM 1 " + value.str() + "\r";
   if(!sendSerialBlocking(command,response)) {
@@ -561,9 +568,9 @@ int Interface::setMaxRPM(uint16_t max_rpm_1,uint16_t max_rpm_2) {
 }
 
 int Interface::setOvervoltageLimit(float overvoltage_limit) {
-  string response="";
-  string command;
-  stringstream value;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
   value<<overvoltage_limit*10;
   command="^OVL " + value.str() + "\r";
   if(!sendSerialBlocking(command,response)) {
@@ -574,9 +581,9 @@ int Interface::setOvervoltageLimit(float overvoltage_limit) {
 }
 
 int Interface::setUndervoltageLimit(float undervoltage_limit) {
-  string response="";
-  string command;
-  stringstream value;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
   value<<undervoltage_limit*10;
   command="^UVL " + value.str() + "\r";
   if(!sendSerialBlocking(command,response)) {
@@ -587,9 +594,9 @@ int Interface::setUndervoltageLimit(float undervoltage_limit) {
 }
 
 int Interface::setEncoderPulsePerRev(uint16_t encoder_pulse_per_rev_1,uint16_t encoder_pulse_per_rev_2) {
-  string response="";
-  string command;
-  stringstream value;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
   value<<encoder_pulse_per_rev_1;
   command="^EPPR 1 " + value.str() + "\r";
   if(!sendSerialBlocking(command,response)) {
@@ -607,9 +614,9 @@ int Interface::setEncoderPulsePerRev(uint16_t encoder_pulse_per_rev_1,uint16_t e
 
 
 int Interface::setSerialEcho(bool serial_echo) {
-  string response="";
-  string command;
-  stringstream value;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
   value<<serial_echo;
   command="^ECHOF " + value.str() + "\r";
   if(!sendSerialBlocking(command,response)) {
@@ -624,9 +631,9 @@ int Interface::setSerialEcho(bool serial_echo) {
 }
 
 int Interface::setSerialWatchdogTimeout(float wd_timeout) {
-  string response="";
-  string command;
-  stringstream value;
+  std::string response="";
+  std::string command;
+  std::stringstream value;
   value<<wd_timeout*1000;
   command="^RWD " + value.str() + "\r";
   if(!sendSerialBlocking(command,response)) {
@@ -636,9 +643,9 @@ int Interface::setSerialWatchdogTimeout(float wd_timeout) {
   return true;
 }
 
-int Interface::setAutomaticTelemetry(string telem_request) {
-  string response="";
-  string command;
+int Interface::setAutomaticTelemetry(std::string telem_request) {
+  std::string response="";
+  std::string command;
   command="^TELS " + telem_request + "\r";
   if(!sendSerialBlocking(command,response)) {
     ROS_WARN("Failed to set the telemetry string to %s", telem_request.c_str());
@@ -648,8 +655,8 @@ int Interface::setAutomaticTelemetry(string telem_request) {
 }
 
 int Interface::writeValuesToEEPROM() {
-  string response="";
-  string command;
+  std::string response="";
+  std::string command;
   command="%EESAV\r";
   if(!sendSerialBlocking(command,response)) {
     ROS_WARN("Failed to save settings in RRPROM");

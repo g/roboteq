@@ -25,13 +25,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ROBOTEQ_INTERFACE
 #define ROBOTEQ_INTERFACE
 
-#include "ros/ros.h"
-#include "std_msgs/String.h"
-#include "roboteq/lightweightserial.h"
-#include "roboteq/Callbacks.h"
-#include <unistd.h>
-#include <iostream>
-#include <sstream>
+#include <stdint.h>
+#include <string>
 
 #define TRUE 1
 #define FALSE 0
@@ -41,9 +36,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define ROBOTEQ_MAX_SETPOINT 1000 //This is defined by the roboteq software range is from -1000 to +1000
 
-using namespace std;
+class LightweightSerial;
 
 namespace roboteq {
+
+class Callbacks;
 
 class Interface {
 private :
@@ -54,8 +51,8 @@ private :
   std::string version_;
   LightweightSerial *controllerPort;
 
-  void sendSerial(string strQuery);
-  int sendSerialBlocking(string strQuery, string response);
+  void sendSerial(std::string strQuery);
+  int sendSerialBlocking(std::string strQuery, std::string response);
 
   bool readSerial();
   std::string last_command_sent_;
@@ -148,7 +145,7 @@ public :
   int setEncoderPulsePerRev(uint16_t encoder_pulse_per_rev_1,uint16_t encoder_pulse_per_rev_2);
   int setSerialEcho(bool serial_echo);
   int setSerialWatchdogTimeout(float wd_timeout);
-  int setAutomaticTelemetry(string telem_request);
+  int setAutomaticTelemetry(std::string telem_request);
   int writeValuesToEEPROM();
 
 
