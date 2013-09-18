@@ -136,7 +136,6 @@ void Interface::sendSerial(std::string strQuery) {
   }
 }
 
-
 void Interface::setMotorSpeeds() {
   std::string motor_command="";
   /*stringstream m1_string;
@@ -147,7 +146,6 @@ void Interface::setMotorSpeeds() {
   motor_command = "!M " + m1_string.str() + " " + m2_string.str() + "\r";*/
   sendSerial(motor_command);
 }
-
 
 void Interface::resetDIOx(int i) {
   std::string strCommand;
@@ -178,8 +176,6 @@ void Interface::setSetpoint(int motor, int val) {
   } else if(val<-ROBOTEQ_MAX_SETPOINT) {
     val=-ROBOTEQ_MAX_SETPOINT;
   }
-
-
   stringVal << val;
   strCommand="!G " + stringMotor.str() + " " + stringVal.str() +"\r";
   last_command_sent_=strCommand;
@@ -215,31 +211,6 @@ void Interface::resetEstop() {
   sendSerial(strCommand);
 }
 
-/*void Interface::setVAR(int i, int val)
-{
-    // need to redo this one
-	string strCommand;
-	stringstream stringID;
-	stringstream stringVal;
-	stringID << i;
-	stringVal << val;
-	strCommand="!VAR " + stringID.str() + " " + stringVal.str() +"\r";
-	sendSerial(strCommand);
-}  // setVAR
-
-
-void Interface::readVAR(int i)
-{
-    //need to do this one
-	string strQuery;
-	stringstream stringID;
-	string stringVal;
-	stringID << i;
-	strQuery="?VAR " + stringID.str() +"\r";
-	sendSerial(strQuery);
-}  // readVAR
-*/
-
 int Interface::setMotorAmpLimit(uint8_t channel,float amp_limit) {
   std::string response="";
   std::string command;
@@ -255,7 +226,6 @@ int Interface::setMotorAmpLimit(uint8_t channel,float amp_limit) {
   ROS_INFO("Set the amp limit on motor %d to %f",channel,amp_limit*10);
   return true;
 }
-
 
 int Interface::setMotorAmpLimit(float amp_limit) {
   std::string response="";
