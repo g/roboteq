@@ -28,15 +28,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdint.h>
 #include <string>
 
-#define TRUE 1
-#define FALSE 0
-
-#define ASCII_CR_CODE 13
-#define ASCII_ACK_CODE 43
-
-#define ROBOTEQ_MAX_SETPOINT 1000 //This is defined by the roboteq software range is from -1000 to +1000
-
-class LightweightSerial;
+namespace serial {
+  class Serial;
+}
 
 namespace roboteq {
 
@@ -49,7 +43,7 @@ private :
   int baud_;
   bool connected_;
   std::string version_;
-  LightweightSerial *controllerPort;
+  serial::Serial *serial_;
 
   void sendSerial(std::string strQuery);
   int sendSerialBlocking(std::string strQuery, std::string response);
@@ -65,7 +59,6 @@ public :
     return connected_;
   }
   void spinOnce();
-
 
   void setMotorSpeeds();
   void resetDIOx(int i);
@@ -122,7 +115,6 @@ public :
   }
 
   //Configuration Parameters, when writing these values should be confirmed (aka should probably block)
-
   int setMotorAmpLimit(float amp_limit);
   int setMotorAmpLimit(uint8_t channel,float amp_limit);
   int setPIDICap(uint8_t channel, float pid_cap);
@@ -147,9 +139,6 @@ public :
   int setSerialWatchdogTimeout(float wd_timeout);
   int setAutomaticTelemetry(std::string telem_request);
   int writeValuesToEEPROM();
-
-
-
 };
 
 }

@@ -25,17 +25,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "roboteq_driver/Interface.h"
 
 #include "roboteq_driver/Callbacks.h"
-#include "roboteq_driver/lightweightserial.h"
 
+#include "serial/serial.h"
 #include "ros/ros.h"
 
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
 
+#define ROBOTEQ_MAX_SETPOINT 1000 //This is defined by the roboteq software range is from -1000 to +1000
+
 double last_path_error_callback=0;
 
 namespace roboteq {
+
+const std::string eol("\r");
+const size_t max_line_length(128);
 
 Interface::Interface (const char *port, int baud, Callbacks* callbacks)
   : callbacks_(callbacks), port_(port), baud_(baud), connected_(false), version_("") {
@@ -46,69 +51,30 @@ Interface::~Interface() {
 }
 
 void Interface::connect() {
-  char byteRead=0;
-  std::string command_Readback="";
-  std::string version_Readback="";
-  int tries=0;
-  int time_out;
+  serial_ = new serial::Serial(port_, baud_);
 
-  controllerPort = new LightweightSerial(port_, baud_);
-
-  while(tries<5) {
-    if (controllerPort->write_block("?FID\r",5)) {
-
-      if (controllerPort->is_ok())
+  for (int tries = 0; tries < 5; tries++) {
+    std::string cmd("?FID" + eol);
+    if (serial_->write(cmd) == cmd.length()) {
+      if (serial_->isOpen())
         connected_ = true;
       else {
         connected_ = false;
         ROS_INFO("Bad Connection with serial port Error %s",port_);
         throw BadConnection();
       }
-
-      usleep(100);
-      time_out=0;
-      while (((int)byteRead!=ASCII_CR_CODE)&&(time_out<500)) {
-        usleep(100);
-        if (controllerPort->read(&byteRead)) {
-          command_Readback += byteRead;
-        }
-        time_out++;
-      }
-
-      if (time_out>=500) {
-        ROS_INFO("Error Timout while getting ID command readback and connecting to %s",port_);
-      }
-      byteRead=0;
-      time_out=0;
-      while (((int)byteRead!=ASCII_CR_CODE)&&(time_out<500)) {
-        usleep(100);
-        if (controllerPort->read(&byteRead)) {
-          version_Readback += byteRead;
-        }
-        time_out++;
-      }
-      if(time_out>=500) {
-        ROS_INFO("Error Timout while reading back ID while connecting to %s",port_);
-        version_Readback="";
-      }
-
-      ROS_INFO("CONTROL Roboteq: Port %s Version recieved-->%s",port_, version_Readback.c_str());
-
+      std::string command_readback = serial_->readline(max_line_length, eol);
+      std::string version_readback = serial_->readline(max_line_length, eol);
+      ROS_INFO_STREAM("Motor controller on port " << port_ << " version [" << version_readback << "]");
+      return;
     } else {
       throw BadConnection();
     }
-
-    if (version_Readback.length()<2) { //system not cleared..try one more time
-      version_Readback="";
-      tries++;
-    } else
-      tries = 6;
+    tries++;
   }
 
-  if (version_Readback.length()<2 && tries > 5) { //never got a reply :(
-    ROS_INFO("CONTROL: Motor controller not replying");
-    throw BadConnection();
-  }
+  ROS_INFO("Motor controller not responding.");
+  throw BadConnection();
 }
 
 
@@ -119,37 +85,13 @@ void Interface::spinOnce() {
 
 
 bool Interface::readSerial() {
-  std::string response = "";
-  char byteRead = 0;
-  int time_out;
-
-  if (controllerPort->read(&byteRead)) {
-    response += byteRead;
-  } else {
-    // Nothing to process; exit the function.
-    return false;
-  }
-
-  time_out=0;
-  while ((int)byteRead != ASCII_CR_CODE) {
-    if (controllerPort->read(&byteRead)) {
-      response += byteRead;
-    } else {
-      usleep(100);
-    }
-    time_out++;
-
-    if(time_out>500) {
-      ROS_INFO("CONTROL: Timeout Error With Serial Port %s ",port_);
-      break;
-    }
-  }
+  std::string response = serial_->readline(max_line_length, eol);
 
   if (response[0] == '-') {
-    ROS_INFO("CONTROL: Query error-response:>%s", response.c_str());
+    ROS_WARN_STREAM("CONTROL: Query error: " << response);
     return true;
   } else if (response[0] == '+') {
-    ROS_DEBUG("CONTROL: Query ACKED on port %s send>  response:>%s",port_, response.c_str());
+    ROS_DEBUG_STREAM("CONTROL: Query acked: " << response);
     return true;
   } else {
     // Call user callback with data.
@@ -168,28 +110,9 @@ int Interface::sendSerialBlocking(std::string strQuery,std::string response) {
   response = "";
 
   while (response[0] != '+') {
-    if (!controllerPort->write_block(strQuery.c_str(),strQuery.length())) {
+    if (!serial_->write(strQuery)) {
       throw BadTransmission();
-    } else {
-      //Read back the data
-      time_out=0;
-      while ((int)byteRead != ASCII_CR_CODE) {
-        if (controllerPort->read(&byteRead)) {
-          response += byteRead;
-        } else {
-          usleep(100);
-        }
-        time_out++;
-
-        if(time_out>500) {
-          read_retries++;
-          ROS_INFO("CONTROL: Timeout Error With Serial Port %s sending %s read try #%d",port_,strQuery.c_str(),read_retries);
-          if(read_retries>3) {
-            ROS_ERROR("CONTROL: Timeout Error With Serial Port %s sending %s read try #%d Giving Up",port_,strQuery.c_str(),read_retries);
-            return(-1);
-          }
-        }
-      }
+    }/*j else {
 
       if (response[0] == '-') {
         ROS_INFO("CONTROL: Query error-response:>%s", response.c_str());
@@ -202,13 +125,13 @@ int Interface::sendSerialBlocking(std::string strQuery,std::string response) {
         return (-2);
       }
       send_retries++;
-    }
+    }*/
   }
   return false;
 }
 
 void Interface::sendSerial(std::string strQuery) {
-  if (!controllerPort->write_block(strQuery.c_str(),strQuery.length())) {
+  if (!serial_->write(strQuery)) {
     throw BadTransmission();
   }
 }

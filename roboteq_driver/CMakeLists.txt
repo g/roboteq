@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(roboteq_driver)
 
-find_package(catkin REQUIRED COMPONENTS roboteq_msgs roscpp)
+find_package(catkin REQUIRED COMPONENTS roboteq_msgs roscpp serial)
 
 catkin_package(
   INCLUDE_DIRS include
@@ -11,12 +11,8 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-# Declare a cpp library
-add_library(${PROJECT_NAME}
-  src/roboteq_driver/Callbacks
-  src/roboteq_driver/Interface
-  src/roboteq_driver/lightweightserial
-)
+# Build and install the roboteq_driver library.
+add_subdirectory(src/${PROJECT_NAME})
 
 # Declare a cpp executable
 add_executable(${PROJECT_NAME}_node src/driver.cpp)
@@ -25,15 +21,13 @@ target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES})
 set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME driver_node PREFIX "")
 
 # Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+install(TARGETS ${PROJECT_NAME}_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 # Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
 )
 
 # Mark other files for installation (e.g. launch and bag files, etc.)
