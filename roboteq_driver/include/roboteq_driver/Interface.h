@@ -25,6 +25,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ROBOTEQ_INTERFACE
 #define ROBOTEQ_INTERFACE
 
+#include <boost/thread/condition_variable.hpp>
 #include <stdint.h>
 #include <string>
 
@@ -45,76 +46,55 @@ private :
   std::string version_;
   serial::Serial *serial_;
 
-  void sendSerial(std::string strQuery);
-  int sendSerialBlocking(std::string strQuery, std::string response);
+  void send(std::string msg);
+  std::string sendWaitReply(std::string msg, int tries=5);
+  bool sendWaitAck(std::string msg);
 
-  bool readSerial();
-  std::string last_command_sent_;
+  void read();
+
+  // These data members are the core of the synchronization strategy in this class.
+  // In short, the sendWaitAck method blocks on receiving an ack, which is passed to
+  // it from the read thread using the last_response_ string.
+  std::string last_response_;
+  boost::mutex last_response_mutex_;
+  boost::condition_variable last_response_available_;
+  bool haveLastResponse() { return !last_response_.empty(); }
 
 public :
   Interface (const char *port, int baud, Callbacks* callbacks);
   ~Interface();
   void connect();
-  bool connected() {
-    return connected_;
-  }
-  void spinOnce();
+  bool connected() { return connected_; }
+  void spinOnce() { read(); }
 
+  // Send commands to motor driver.
   void setMotorSpeeds();
   void resetDIOx(int i);
   void setDIOx(int i);
-  void setSetpoint(int motor,int val);
-  void setSetpoint(int val);
+  void setSetpoint(int motor, int val);
   void setEstop();
   void resetEstop();
   void setVAR(int i, int val);
 
-  // Runtime Querys.
-  void getMotorCurrent() {
-    sendSerial("?A\r");
-  }
-  void getSupplyCurrent() {
-    sendSerial("?BA\r");
-  }
-  void getEncoderCount() {
-    sendSerial("?C\r");
-  }
-  void getEncoderRPM() {
-    sendSerial("?S\r");
-  }
+  // Runtime queries: the results of these go to the callback methods.
+  void getMotorCurrent() { send("?A"); }
+  void getSupplyCurrent() { send("?BA"); }
+  void getEncoderCount() { send("?C"); }
+  void getEncoderRPM() { send("?S"); }
   void getDigitalInputs();
   void getDigitalOutputs();
-  void getClosedLoopError() {
-    sendSerial("?E\r");
-  }
+  void getClosedLoopError() { send("?E"); }
   void getFeedbackIn();
-  void getFault() {
-    sendSerial("?FF\r");
-  }
-  void getStatus() {
-    sendSerial("?FS\r");
-  }
-  void getMotorPower() {
-    sendSerial("?P\r");
-  }
+  void getFault() { send("?FF"); }
+  void getStatus() { send("?FS"); }
+  void getMotorPower() { send("?P"); }
   void getPulsedInputs();
-  void getDriverTemperature() {
-    sendSerial("?T\r");
-  }
-  void getMotorTemperature() {
-    sendSerial("?AI 1\r");
-  }
-  void getMotorCommanded() {
-    sendSerial("?M\r");
-  }
-  void getUserVariable() {
-    sendSerial("?VAR\r");
-  }
-  void getVoltages() {
-    sendSerial("?V\r");
-  }
+  void getDriverTemperature() { send("?T"); }
+  void getMotorTemperature() { send("?AI 1"); }
+  void getMotorCommanded() { send("?M"); }
+  void getVoltages() { send("?V"); }
 
-  //Configuration Parameters, when writing these values should be confirmed (aka should probably block)
+  // Set configuration parameters, when writing these values should be confirmed (aka should probably block)
   int setMotorAmpLimit(float amp_limit);
   int setMotorAmpLimit(uint8_t channel,float amp_limit);
   int setPIDICap(uint8_t channel, float pid_cap);

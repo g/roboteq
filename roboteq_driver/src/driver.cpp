@@ -206,15 +206,17 @@ int main(int argc, char **argv) {
   Callbacks callbacks(
     nh.advertise<roboteq_msgs::Feedback>("feedback", 10),
     nh.advertise<roboteq_msgs::Status>("status", 10));
-  //callbacks.feedback_publisher = nh.advertise<roboteq_msgs::Feedback>("feedback", 10);
 
   // Timer is 100Hz so that the 10Hz Status messages can be out of phase from
   // the 50Hz Feedback messages, and minimize the likelihood of jitter.
   ros::Timer timer = nh.createTimer(ros::Duration(0.01), &Callbacks::tick, &callbacks);
 
   // Message subscribers.
-  ros::Subscriber sub = nh.subscribe("cmd", 1, command_callback);
-  ros::Subscriber sub2= nh.subscribe("config",1,config_callback);
+  ros::Subscriber sub_cmd = nh.subscribe("cmd", 1, command_callback);
+  ros::Subscriber sub_config = nh.subscribe("config", 1, config_callback);
+
+  // Process ROS IO in background thread.
+  ros::AsyncSpinner ros_spinner(1);
 
   // Serial interface to motor controller.
   controller = new roboteq::Interface(port.c_str(), baud, &callbacks);
@@ -223,17 +225,16 @@ int main(int argc, char **argv) {
     try {
       ROS_DEBUG("Attempting connection to %s at %i.", port.c_str(), baud);
       controller->connect();
+      ros_spinner.start();
       while (ros::ok()) {
-        // TODO: eliminate this polling in favour of a separate thread for
-        // each spinner, or select.
-        ros::spinOnce();
         controller->spinOnce();
-        usleep(100);
       }
+      ros_spinner.stop();
     } catch(roboteq::BadConnection e) {
       ROS_WARN("Problem connecting to serial device. Trying again in 1s.");
       sleep(1);
     }
+    
   }
 
   return 0;
