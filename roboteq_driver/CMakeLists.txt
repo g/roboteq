@@ -13,9 +13,9 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 # Declare a cpp library
 add_library(${PROJECT_NAME}
-  src/roboteq/Callbacks.cpp
-  src/roboteq/Interface.cpp
-  src/roboteq/lightweightserial.cpp
+  src/roboteq_driver/Callbacks
+  src/roboteq_driver/Interface
+  src/roboteq_driver/lightweightserial
 )
 
 # Declare a cpp executable
