@@ -46,10 +46,10 @@ void command_callback(const roboteq_msgs::Command& command) {
 
 void config_callback(const roboteq_msgs::Config& config) {
   unsigned int i;
-  for (i=0; i<config.motor_amp_limit.size(); i++) {
+  /*for (i=0; i<config.motor_amp_limit.size(); i++) {
     controller->setMotorAmpLimit((i+1), config.motor_amp_limit[i]);
     ROS_INFO("Set the motor current limit of motor %d to %f",i+1,config.motor_amp_limit[i]);
-  }
+  }*/
 }
 
 class Callbacks : public roboteq::Callbacks {
