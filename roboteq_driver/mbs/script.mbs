@@ -1,0 +1,34 @@
+setconfig(_ECHOF, 1) ' Serial echo off
+setconfig(_RWD, 110) ' Watchdog timeout
+
+top:
+  SetTimerCount(1, 20)
+  GoSub PrintFeedback  ' 50 Hz
+  c++
+  if (c = 5) then
+    GoSub PrintStatus  ' 10 Hz
+    c = 0
+  end if
+  wait(GetTimerCount(1))  
+  goto top
+
+PrintFeedback:
+  print("&f:", getvalue(_MOTAMPS, 1))
+  print(":", getvalue(_MOTCMD, 1))
+  print(":", getvalue(_MOTPWR, 1))
+  print(":", getvalue(_ABSPEED, 1))
+  print(":", getvalue(_ABCNTR, 1))
+  print(":", getvalue(_VOLTS, 1))
+  print(":", getvalue(_BATAMPS, 1))
+  print("\r")
+  Return
+  
+PrintStatus:
+  print("&s:", getvalue(_FLTFLAG))
+  print(":", getvalue(_STFLAG))
+  print(":", getvalue(_TEMP, 1))
+  print(":", getvalue(_TEMP, 2))
+  print(":", getvalue(_TEMP, 3))
+  print(":", getvalue(_ANAIN, 1))
+  print("\r")
+  Return
