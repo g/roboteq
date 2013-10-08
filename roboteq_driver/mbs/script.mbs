@@ -1,34 +1,42 @@
+SCRIPT_VER=1
+MAX_CHANNELS=8
+
 setconfig(_ECHOF, 1) ' Serial echo off
 setconfig(_RWD, 110) ' Watchdog timeout
 
 top:
   SetTimerCount(1, 20)
-  GoSub PrintFeedback  ' 50 Hz
+  for ch = 1 andwhile ch <= MAX_CHANNELS evaluate ch++
+    if getvalue(_BOOL, ch) = 1 then
+      GoSub PrintFeedback  ' 50 Hz
+    end if
+  next
   c++
-  if (c = 5) then
+  if c = 5 then
     GoSub PrintStatus  ' 10 Hz
     c = 0
   end if
-  wait(GetTimerCount(1))  
+  wait(GetTimerCount(1))
   goto top
 
 PrintFeedback:
-  print("&f:", getvalue(_MOTAMPS, 1))
-  print(":", getvalue(_MOTCMD, 1))
-  print(":", getvalue(_MOTPWR, 1))
-  print(":", getvalue(_ABSPEED, 1))
-  print(":", getvalue(_ABCNTR, 1))
-  print(":", getvalue(_VOLTS, 1))
-  print(":", getvalue(_BATAMPS, 1))
+  print("&f:", ch)
+  print(":", getvalue(_MOTAMPS, ch))
+  print(":", getvalue(_MOTCMD, ch))
+  print(":", getvalue(_MOTPWR, ch))
+  print(":", getvalue(_ABSPEED, ch))
+  print(":", getvalue(_ABCNTR, ch))
+  print(":", getvalue(_VOLTS, ch))
+  print(":", getvalue(_BATAMPS, ch))
+  print(":", getvalue(_ANAIN, ch))
+  print(":", getvalue(_TEMP, ch+1))
   print("\r")
   Return
-  
+
 PrintStatus:
-  print("&s:", getvalue(_FLTFLAG))
+  print("&s:", SCRIPT_VER)
+  print(":", getvalue(_FLTFLAG))
   print(":", getvalue(_STFLAG))
   print(":", getvalue(_TEMP, 1))
-  print(":", getvalue(_TEMP, 2))
-  print(":", getvalue(_TEMP, 3))
-  print(":", getvalue(_ANAIN, 1))
   print("\r")
   Return
