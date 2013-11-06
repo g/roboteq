@@ -1,5 +1,6 @@
 # 50Hz feedback message for controls purposes
 # Arrays for motor-specific values to support dual-channel drivers.
+Header header
 
 # Current flowing in the motors (A)
 float32[] motor_current

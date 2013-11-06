@@ -1,4 +1,5 @@
 # 10Hz status message for informational/diagnostics purposes
+Header header
 
 uint8 FAULT_OVERHEAT=1
 uint8 FAULT_OVERVOLTAGE=2
