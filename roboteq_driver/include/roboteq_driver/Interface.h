@@ -46,8 +46,9 @@ private :
   bool connected_;
   std::string version_;
   serial::Serial *serial_;
+  std::stringstream tx_buffer_;
 
- // These data members are the core of the synchronization strategy in this class.
+  // These data members are the core of the synchronization strategy in this class.
   // In short, the sendWaitAck method blocks on receiving an ack, which is passed to
   // it from the read thread using the last_response_ string.
   std::string last_response_;
@@ -59,7 +60,8 @@ private :
 
   class MessageSender {
     public:
-    MessageSender(std::string init) : init_(init) {}
+    MessageSender(std::string init, Interface* interface)
+        : init_(init), interface_(interface) {}
 
     template<typename T>
     MessageSender& operator<<(const T val) {
@@ -70,14 +72,16 @@ private :
       }
       return *this;
     }
-
-    void operator<<(EOMSend) {
-      std::cout << ss.str() << "\n";
+ 
+    void operator<<(EOMSend) 
+    {
+      interface_->write(ss.str());
       ss.str("");
     }
-
+   
     private:
     std::string init_;
+    Interface* interface_;
     std::stringstream ss;
   };
 
@@ -86,14 +90,8 @@ private :
   MessageSender param;
   EOMSend send, sendVerify;
 
-  /*void send(std::string msg);
-  void send(char type, std::string code, int8_t channel=0, std::string arg="");
-  void send(Message msg);*/
-  
-  //std::string sendWaitReply(std::string msg, int tries=5);
-  //bool sendWaitAck(std::string msg);
   void read();
-
+  void write(std::string);
  
 public :
   Interface (const char *port, int baud, Callbacks* callbacks);
@@ -101,6 +99,7 @@ public :
   void connect();
   bool connected() { return connected_; }
   void spinOnce() { read(); }
+  void flush();
 
   // Send commands to motor driver.
   void setEstop() { command << "EX" << send; }
@@ -151,7 +150,7 @@ public :
   int setEncoderPulsePerRev(uint8_t channel, uint16_t pulse_per_rev) {
     param << "EPPR" << channel << pulse_per_rev << sendVerify; }
   int setSerialEcho(bool serial_echo) {
-    param << "ECHOF" << (serial_echo ? 1 : 0) << sendVerify; }
+    param << "ECHOF" << (serial_echo ? 0 : 1) << sendVerify; }
   int setSerialWatchdogTimeout(int timeout_ms) { 
     param << "RWD" << timeout_ms << sendVerify; }
 

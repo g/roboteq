@@ -37,10 +37,10 @@ roboteq::Interface* controller;
 
 void command_callback(const roboteq_msgs::Command& command) {
   unsigned int i;
-  for (i=0; i<command.setpoint.size(); i++) {
+  for (i=0; i<command.commanded_velocity.size(); i++) {
     //ROS_INFO("Sending %f to motor %d size2 %d", command.setpoint[i],i+1,command.setpoint.size());
     //set the value of the motors
-    controller->setSetpoint((i+1), command.setpoint[i]);
+    controller->setSetpoint((i+1), command.commanded_velocity[i]);
   }
 }
 
@@ -55,12 +55,14 @@ void config_callback(const roboteq_msgs::Config& config) {
 class Callbacks : public roboteq::Callbacks {
 private:
   // Feedback message handlers
-  uint8_t feedback_pending;
+  int feedback_pending;
 
   roboteq_msgs::Feedback feedback;
   ros::Publisher feedback_publisher;
 
   void request_feedback() {
+    ROS_WARN_STREAM_COND(feedback_pending > 0, "Requesting next feedback batch, but "
+        << feedback_pending << " items still pending from previous.");
     controller->getMotorCurrent();
     controller->getMotorCommanded();
     controller->getMotorPower();
@@ -68,6 +70,7 @@ private:
     controller->getVoltages();
     controller->getSupplyCurrent();
     feedback_pending = 6;
+    controller->flush();
   }
 
   void check_feedback() {
@@ -96,16 +99,16 @@ private:
   }
 
   void motorCommanded(float commanded_1, float commanded_2) {
-    feedback.motor_commanded.resize(2);
-    feedback.motor_commanded[0] = commanded_1;
-    feedback.motor_commanded[1] = commanded_2;
+    feedback.commanded_velocity.resize(2);
+    feedback.commanded_velocity[0] = commanded_1;
+    feedback.commanded_velocity[1] = commanded_2;
     check_feedback();
   }
 
   void encoderRPM(uint32_t rpm_1, uint32_t rpm_2) {
-    feedback.encoder_rpm.resize(2);
-    feedback.encoder_rpm[0] = rpm_1;
-    feedback.encoder_rpm[1] = rpm_2;
+    feedback.measured_velocity.resize(2);
+    feedback.measured_velocity[0] = rpm_1;
+    feedback.measured_velocity[1] = rpm_2;
     check_feedback();
   }
 
@@ -116,21 +119,24 @@ private:
     check_feedback();
   }
 
-  void versionID(std::string ID) {
-    ROS_INFO("ROBOTEQ: Version recieved-->%s",ID.c_str());
+  void versionID(std::string ver) {
+    ROS_INFO_STREAM("ROBOTEQ: Version received: " << ver);
   }
 
-  uint8_t status_pending;
+  int status_pending;
   ros::Publisher status_publisher;
   roboteq_msgs::Status status;
 
   void request_status() {
+    ROS_WARN_STREAM_COND(status_pending > 0, "Requesting next status batch, but "
+        << status_pending << " items still pending from previous.");
     controller->getFault();
     controller->getStatus();
     controller->getDriverTemperature();
     controller->getMotorTemperature();
     //controller->getDigitalInputs();
-    status_pending = 3;
+    status_pending = 4;
+    controller->flush();
   }
 
   void check_status() {
@@ -170,11 +176,9 @@ private:
   }
 
 public:
-  Callbacks(ros::Publisher feedback_publisher2, ros::Publisher status_publisher) :
-    feedback_pending(0),
-    feedback_publisher(feedback_publisher2),
-    status_pending(0),
-    status_publisher(status_publisher) {}
+  Callbacks(ros::Publisher feedback_publisher, ros::Publisher status_publisher) :
+    feedback_pending(0), feedback_publisher(feedback_publisher),
+    status_pending(0), status_publisher(status_publisher) {}
 
   void tick(const ros::TimerEvent&) {
     static uint8_t count = 0;
@@ -195,12 +199,12 @@ public:
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "~");
-  ros::NodeHandle nh("~");
+  ros::NodeHandle nh("");
 
   std::string port;
   int32_t baud;
-  nh.param<std::string>("port", port, "/dev/ttyACM0");
-  nh.param<int32_t>("baud", baud, 115200);
+  ros::param::param<std::string>("port", port, "/dev/ttyUSB0");
+  ros::param::param("baud", baud, 115200);
 
   // Message publishers, and the callbacks to receive serial messages from Roboteq.
   Callbacks callbacks(
@@ -209,7 +213,8 @@ int main(int argc, char **argv) {
 
   // Timer is 100Hz so that the 10Hz Status messages can be out of phase from
   // the 50Hz Feedback messages, and minimize the likelihood of jitter.
-  ros::Timer timer = nh.createTimer(ros::Duration(0.01), &Callbacks::tick, &callbacks);
+  // ros::Timer timer = nh.createTimer(ros::Duration(0.01), &Callbacks::tick, &callbacks);
+  ros::Timer timer = nh.createTimer(ros::Duration(0.04), &Callbacks::tick, &callbacks);
 
   // Message subscribers.
   ros::Subscriber sub_cmd = nh.subscribe("cmd", 1, command_callback);
@@ -233,8 +238,7 @@ int main(int argc, char **argv) {
     } catch(roboteq::BadConnection e) {
       ROS_WARN("Problem connecting to serial device. Trying again in 1s.");
       sleep(1);
-    }
-    
+    }  
   }
 
   return 0;

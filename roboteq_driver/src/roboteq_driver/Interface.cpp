@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ros/ros.h"
 
 #include <boost/bind.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
@@ -44,7 +45,7 @@ const int max_setpoint(1000);
 
 Interface::Interface (const char *port, int baud, Callbacks* callbacks)
   : callbacks_(callbacks), port_(port), baud_(baud), connected_(false), version_(""),
-    command("!"), query("?"), param("^") {
+    command("!", this), query("?", this), param("^", this) {
 }
 
 Interface::~Interface() {
@@ -54,23 +55,19 @@ void Interface::connect() {
   serial_ = new serial::Serial(port_, baud_);
 
   for (int tries = 0; tries < 5; tries++) {
-    std::string cmd("?FID" + eol);
-    if (serial_->write(cmd) == cmd.length()) {
-      if (serial_->isOpen())
-        connected_ = true;
-      else {
-        connected_ = false;
-        ROS_INFO("Bad Connection with serial port Error %s",port_);
-        throw BadConnection();
-      }
-      std::string command_readback = serial_->readline(max_line_length, eol);
-      std::string version_readback = serial_->readline(max_line_length, eol);
-      ROS_INFO_STREAM("Motor controller on port " << port_ << " version [" << version_readback << "]");
-      return;
-    } else {
+    query << "FID" << send;
+    setSerialEcho(false);
+    flush();
+
+    if (serial_->isOpen())
+      connected_ = true;
+    else {
+      connected_ = false;
+      ROS_INFO("Bad Connection with serial port Error %s",port_);
       throw BadConnection();
     }
-    tries++;
+
+    return;
   }
 
   ROS_INFO("Motor controller not responding.");
@@ -79,16 +76,28 @@ void Interface::connect() {
 
 void Interface::read() {
   std::string msg = serial_->readline(max_line_length, eol);
-  ROS_DEBUG_STREAM_NAMED("serial", "RX: " << msg);
-  if (msg[0] == '+' || msg[0] == '-') {
-    // Notify the ROS thread that a message response (ack/nack) has arrived.
-    boost::lock_guard<boost::mutex> lock(last_response_mutex_);
-    last_response_ = msg;
-    last_response_available_.notify_one();
-  } else {
-    // User callback to handle it.
-    callbacks_->handle(msg);
+  if (!msg.empty()) {
+    ROS_DEBUG_STREAM_NAMED("serial", "RX: " << msg);
+    if (msg[0] == '+' || msg[0] == '-') {
+      // Notify the ROS thread that a message response (ack/nack) has arrived.
+      boost::lock_guard<boost::mutex> lock(last_response_mutex_);
+      last_response_ = msg;
+      last_response_available_.notify_one();
+    } else {
+      // User callback to handle it.
+      callbacks_->handle(msg);
+    }
   }
+}
+
+void Interface::write(std::string msg) {
+  tx_buffer_ << msg << eol;
+}
+
+void Interface::flush() {
+  ROS_DEBUG_STREAM_NAMED("serial", "TX: " << boost::algorithm::replace_all_copy(tx_buffer_.str(), "\r", "\\r"));
+  serial_->write(tx_buffer_.str());
+  tx_buffer_.str("");
 }
 
 /*void Interface::send(std::string msg) {
