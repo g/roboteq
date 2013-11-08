@@ -1,42 +1,69 @@
 SCRIPT_VER=1
-MAX_CHANNELS=8
+MAX_CHANNELS=2
 
-setconfig(_ECHOF, 1) ' Serial echo off
-setconfig(_RWD, 110) ' Watchdog timeout
+' Motor controller configuration. Much of this is particular to Grizzly
+' and can be generalized/parameterized as the need arises. Page numbers
+' are a reference to this document:
+' www.roboteq.com/index.php/docman/motor-controllers-documents-and-files/documentation/user-manual/7-nextgen-controllers-user-manual/file
+
+setconfig(_ECHOF, 1) ' Serial echo off (p195)
+setconfig(_RWD, 110) ' Watchdog timeout, milliseconds (p195)
+
+' Undervoltage/overvoltage limits (p214)
+setconfig(_OVL, 60)
+setconfig(_UVL, 46)
+
+' Encoder config (p208)
+setconfig(_EMOD, 1, 50)
+setconfig(_EPPR, 1, 1024)
+
+' Current limit (p216)
+setconfig(_ALIM, 1, 1500)
+setconfig(_ATGA, 1, 2000)
+setconfig(_ATGD, 1, 50)
+setconfig(_ATRIG, 1, 0)
+
+' Closed-loop control (p216-218)
+setconfig(_MMOD, 1, 1)
+setconfig(_KP, 1, 20)
+setconfig(_KI, 1, 40)
+setconfig(_KD, 1, 10)
+setconfig(_ICAP, 1, 100)
+setconfig(_CLERD, 1, 0)
 
 top:
-  SetTimerCount(1, 20)
-  for ch = 1 andwhile ch <= MAX_CHANNELS evaluate ch++
-    if getvalue(_BOOL, ch) = 1 then
-      GoSub PrintFeedback  ' 50 Hz
-    end if
-  next
-  c++
-  if c = 5 then
-    GoSub PrintStatus  ' 10 Hz
-    c = 0
-  end if
-  wait(GetTimerCount(1))
-  goto top
+	SetTimerCount(1, 20)
+	for ch = 1 andwhile ch <= MAX_CHANNELS evaluate ch++
+		if getvalue(_BOOL, ch) = 1 then
+			GoSub PrintFeedback  ' 50 Hz
+		end if
+	next
+	c++
+	if c = 5 then
+		GoSub PrintStatus  ' 10 Hz
+		c = 0
+	end if
+	wait(GetTimerCount(1))	
+	goto top
 
 PrintFeedback:
-  print("&f:", ch)
-  print(":", getvalue(_MOTAMPS, ch))
-  print(":", getvalue(_MOTCMD, ch))
-  print(":", getvalue(_MOTPWR, ch))
-  print(":", getvalue(_ABSPEED, ch))
-  print(":", getvalue(_ABCNTR, ch))
-  print(":", getvalue(_VOLTS, ch))
-  print(":", getvalue(_BATAMPS, ch))
-  print(":", getvalue(_ANAIN, ch))
-  print(":", getvalue(_TEMP, ch+1))
-  print("\r")
-  Return
-
+	print("&f:", ch)
+	print(":", getvalue(_MOTAMPS, ch))
+	print(":", getvalue(_MOTCMD, ch))
+	print(":", getvalue(_MOTPWR, ch))
+	print(":", getvalue(_ABSPEED, ch))
+	print(":", getvalue(_ABCNTR, ch))
+	print(":", getvalue(_VOLTS, ch))
+	print(":", getvalue(_BATAMPS, ch))
+	print(":", getvalue(_ANAIN, ch))
+	print(":", getvalue(_TEMP, ch+1))
+	print("\r")
+	Return
+	
 PrintStatus:
-  print("&s:", SCRIPT_VER)
-  print(":", getvalue(_FLTFLAG))
-  print(":", getvalue(_STFLAG))
-  print(":", getvalue(_TEMP, 1))
-  print("\r")
-  Return
+	print("&s:", SCRIPT_VER)
+	print(":", getvalue(_FLTFLAG))
+	print(":", getvalue(_STFLAG))
+	print(":", getvalue(_TEMP, 1))
+	print("\r")
+	Return
