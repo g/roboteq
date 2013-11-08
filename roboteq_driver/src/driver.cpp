@@ -203,8 +203,8 @@ int main(int argc, char **argv) {
 
   std::string port;
   int32_t baud;
-  ros::param::param<std::string>("port", port, "/dev/ttyUSB0");
-  ros::param::param("baud", baud, 115200);
+  ros::param::param<std::string>("~port", port, "/dev/ttyUSB0");
+  ros::param::param("~baud", baud, 115200);
 
   // Message publishers, and the callbacks to receive serial messages from Roboteq.
   Callbacks callbacks(

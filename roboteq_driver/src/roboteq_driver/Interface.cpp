@@ -54,6 +54,9 @@ Interface::~Interface() {
 void Interface::connect() {
   serial_ = new serial::Serial(port_, baud_);
 
+  serial::Timeout to = serial::Timeout::simpleTimeout(100);
+  serial_->setTimeout(to);
+
   for (int tries = 0; tries < 5; tries++) {
     query << "FID" << send;
     setSerialEcho(false);
@@ -87,6 +90,8 @@ void Interface::read() {
       // User callback to handle it.
       callbacks_->handle(msg);
     }
+  } else {
+    ROS_WARN_NAMED("serial", "Serial::readline() returned no data or timed out.");
   }
 }
 
@@ -96,7 +101,10 @@ void Interface::write(std::string msg) {
 
 void Interface::flush() {
   ROS_DEBUG_STREAM_NAMED("serial", "TX: " << boost::algorithm::replace_all_copy(tx_buffer_.str(), "\r", "\\r"));
-  serial_->write(tx_buffer_.str());
+  ssize_t bytes_written = serial_->write(tx_buffer_.str());
+  if (bytes_written < tx_buffer_.tellp()) {
+    ROS_WARN_STREAM("Serial write timeout, " << bytes_written << " bytes written of " << tx_buffer_.tellp() << ".");
+  }
   tx_buffer_.str("");
 }
 
