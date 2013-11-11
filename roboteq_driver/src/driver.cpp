@@ -2,7 +2,8 @@
 Software License Agreement (BSD)
 
 \file      driver.cpp
-\authors   Mike Irvine <mirvine@clearpathrobotics.com>
+\authors   Mike Purvis <mpurvis@clearpathrobotics.com>
+           Mike Irvine <mirvine@clearpathrobotics.com>
 \copyright Copyright (c) 2013, Clearpath Robotics, Inc., All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
@@ -34,25 +35,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 roboteq::Interface* controller;
 
-
 void command_callback(const roboteq_msgs::Command& command) {
-  unsigned int i;
-  for (i=0; i<command.commanded_velocity.size(); i++) {
-    //ROS_INFO("Sending %f to motor %d size2 %d", command.setpoint[i],i+1,command.setpoint.size());
-    //set the value of the motors
+  for (int i = 0; i < command.commanded_velocity.size(); i++) {
+    ROS_DEBUG("Commanding motor %d to setpoint %f", i+1, command.commanded_velocity[i]);
     controller->setSetpoint((i+1), command.commanded_velocity[i]);
   }
 }
 
-void config_callback(const roboteq_msgs::Config& config) {
-  unsigned int i;
-  /*for (i=0; i<config.motor_amp_limit.size(); i++) {
-    controller->setMotorAmpLimit((i+1), config.motor_amp_limit[i]);
-    ROS_INFO("Set the motor current limit of motor %d to %f",i+1,config.motor_amp_limit[i]);
-  }*/
-}
-
-class Callbacks : public roboteq::Callbacks {
+/*class Callbacks : public roboteq::Callbacks {
 private:
   // Feedback message handlers
   int feedback_pending;
@@ -195,7 +185,7 @@ public:
       if (count == 1) request_status();
     }
   }
-};
+};*/
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "~");
@@ -207,24 +197,23 @@ int main(int argc, char **argv) {
   ros::param::param("~baud", baud, 115200);
 
   // Message publishers, and the callbacks to receive serial messages from Roboteq.
-  Callbacks callbacks(
+  /*Callbacks callbacks(
     nh.advertise<roboteq_msgs::Feedback>("feedback", 10),
-    nh.advertise<roboteq_msgs::Status>("status", 10));
+    nh.advertise<roboteq_msgs::Status>("status", 10));*/
 
   // Timer is 100Hz so that the 10Hz Status messages can be out of phase from
   // the 50Hz Feedback messages, and minimize the likelihood of jitter.
   // ros::Timer timer = nh.createTimer(ros::Duration(0.01), &Callbacks::tick, &callbacks);
-  ros::Timer timer = nh.createTimer(ros::Duration(0.04), &Callbacks::tick, &callbacks);
+  // ros::Timer timer = nh.createTimer(ros::Duration(0.04), &Callbacks::tick, &callbacks);
 
   // Message subscribers.
   ros::Subscriber sub_cmd = nh.subscribe("cmd", 1, command_callback);
-  ros::Subscriber sub_config = nh.subscribe("config", 1, config_callback);
 
   // Process ROS IO in background thread.
   ros::AsyncSpinner ros_spinner(1);
 
   // Serial interface to motor controller.
-  controller = new roboteq::Interface(port.c_str(), baud, &callbacks);
+  controller = new roboteq::Interface(port.c_str(), baud); //, &callbacks);
 
   while (ros::ok()) {
     try {

@@ -25,6 +25,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ROBOTEQ_INTERFACE
 #define ROBOTEQ_INTERFACE
 
+#include "ros/ros.h"
+
 #include <boost/thread/condition_variable.hpp>
 #include <boost/lexical_cast.hpp>
 #include <stdint.h>
@@ -55,6 +57,10 @@ private :
   boost::mutex last_response_mutex_;
   boost::condition_variable last_response_available_;
   bool haveLastResponse() { return !last_response_.empty(); }
+
+  // These track our progress in attempting to initialize the controller.
+  uint8_t start_script_attempts_;
+  bool received_feedback_;
 
   class EOMSend {};
 
@@ -92,9 +98,12 @@ private :
 
   void read();
   void write(std::string);
+  
+  void processStatus(std::string msg);
+  void processFeedback(std::string msg);
  
 public :
-  Interface (const char *port, int baud, Callbacks* callbacks);
+  Interface (const char *port, int baud);
   ~Interface();
   void connect();
   bool connected() { return connected_; }
@@ -107,6 +116,11 @@ public :
   void resetDIOx(int i) { command << "D0" << i << send; }
   void setDIOx(int i) { command << "D1" << i << send; }
   void setSetpoint(int channel, int val) { command << "G" << channel << val << send; }
+  void startScript() { command << "R" << send; }
+  void stopScript() { command << "R" << 0 << send; }
+  void setUserVariable(int var, int val) { command << "VAR" << var << val << send; }
+  void setUserBool(int var, bool val) { command << "B" << var << (val ? 1 : 0) << send; }
+  bool downloadScript();
 
   // Runtime queries: the results of these go to the callback methods.
   void getMotorCurrent() { query << "A" << send; }

@@ -27,13 +27,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "roboteq_driver/Callbacks.h"
 
 #include "serial/serial.h"
-#include "ros/ros.h"
 
 #include <boost/bind.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
+
+// Link to generated source from Microbasic script file. 
+extern const char* script_lines[];
 
 namespace roboteq {
 
@@ -43,8 +45,9 @@ const size_t max_line_length(128);
 // Roboteq-defined limit
 const int max_setpoint(1000);
 
-Interface::Interface (const char *port, int baud, Callbacks* callbacks)
-  : callbacks_(callbacks), port_(port), baud_(baud), connected_(false), version_(""),
+Interface::Interface (const char *port, int baud)
+  : port_(port), baud_(baud), connected_(false), version_(""),
+    start_script_attempts_(0), received_feedback_(false),
     command("!", this), query("?", this), param("^", this) {
 }
 
@@ -54,7 +57,7 @@ Interface::~Interface() {
 void Interface::connect() {
   serial_ = new serial::Serial(port_, baud_);
 
-  serial::Timeout to = serial::Timeout::simpleTimeout(100);
+  serial::Timeout to = serial::Timeout::simpleTimeout(500);
   serial_->setTimeout(to);
 
   for (int tries = 0; tries < 5; tries++) {
@@ -86,12 +89,41 @@ void Interface::read() {
       boost::lock_guard<boost::mutex> lock(last_response_mutex_);
       last_response_ = msg;
       last_response_available_.notify_one();
+    } else if (msg[0] == '&') {
+      if (msg[1] == 's') {
+        // Motor controller status. 
+        processStatus(msg);
+        if (!received_feedback_) {
+          ROS_DEBUG("Attempt to start feedback output.");
+          setUserBool(1, 1);
+          flush();
+        }
+        received_feedback_ = false;
+      } else if (msg[1] == 'f') {
+        // Motor controller channel feedback.
+        processFeedback(msg);
+        received_feedback_ = true;
+      } 
     } else {
-      // User callback to handle it.
-      callbacks_->handle(msg);
+      // Unknown other message.
+      ROS_WARN_STREAM("Unknown serial message received: " << msg);
     }
   } else {
-    ROS_WARN_NAMED("serial", "Serial::readline() returned no data or timed out.");
+    ROS_WARN_NAMED("serial", "Serial::readline() returned no data.");
+    ROS_DEBUG("No status messages.");
+    if (start_script_attempts_ < 5) {
+      start_script_attempts_++;
+      ROS_DEBUG("Attempt #%d to start MBS program.", start_script_attempts_);
+      startScript();
+      flush();
+      //ros::Duration(0.2).sleep(); 
+    } else {
+      ROS_DEBUG("Attempting to download MBS program.");
+      if (downloadScript()) {
+        start_script_attempts_ = 0;
+      }
+      ros::Duration(1.0).sleep(); 
+    }
   }
 }
 
@@ -108,55 +140,43 @@ void Interface::flush() {
   tx_buffer_.str("");
 }
 
-/*void Interface::send(std::string msg) {
-  std::string buf = msg + eol;
-  ROS_DEBUG_STREAM_NAMED("serial", "TX: " << buf);
-  serial_->write(buf);
-}*/
+void Interface::processStatus(std::string msg) {
 
-/*void Interface::send(char type, std::string code, int8_t channel, std::string arg) {
-  std::stringstream ss;
-  ss << type << code;
-  if (channel > 0) {
-    ss << " " << channel;
-  }
-  if (!arg.empty()) {
-    ss << " " << arg;
-  }
-  ss << eol;
-  std::string buf(ss.str());
-  ROS_DEBUG_STREAM_NAMED("serial", "TX: " << buf);
-  serial_->write(buf);
-}*/
-
-/*void Interface::send(char type, std::string code, std::string arg) {
-  send(type, code, 0, arg);
-}*/
-
-/*std::string Interface::sendWaitReply(std::string msg, int tries) {
-  for (int trynum = 0; trynum <= tries; trynum++ ) {
-    boost::unique_lock<boost::mutex> lock(last_response_mutex_);
-    boost::system_time const timeout(boost::get_system_time() + boost::posix_time::milliseconds(500));
-    last_response_.clear();
-
-    send(msg);
-    if (last_response_available_.timed_wait(lock, timeout,
-          boost::bind(&Interface::haveLastResponse, this))) {
-      // Response available.
-      ROS_DEBUG_STREAM_NAMED("comms", "Reply to message received.");
-      return last_response_;
-    } else {
-      // Timed out waiting for response, try again.
-      ROS_WARN_STREAM_NAMED("comms", "Missing reply to message, retry #" << trynum);
-      continue;
-    }
-  }
-  ROS_ERROR_STREAM_NAMED("comms", "Giving up on receiving reply to message [" << msg << "]");
-  throw BadTransmission();
 }
 
-bool Interface::sendWaitAck(std::string msg) {
+void Interface::processFeedback(std::string msg) {
 
-}*/
+}
+
+bool Interface::downloadScript() {
+  ROS_DEBUG("Commanding driver to stop executing script.");
+  stopScript(); flush();
+  serial_->readline(max_line_length, eol);  // Swallow ack/nack.
+  
+  // Send SLD.
+  ROS_DEBUG("Commanding driver to enter download mode.");
+  write("%SLD 321654987"); flush();
+
+  // Check special ack from SLD.
+  std::string msg = serial_->readline(max_line_length, eol);
+  ROS_DEBUG_STREAM_NAMED("serial", "RX: " << msg);
+  if (msg != "HLD\r") {
+    ROS_DEBUG("Could not enter download mode.");
+    return false;
+  }
+  
+  // Send hex program, line by line, checking for an ack from each line.
+  int line_num = 0;
+  while(script_lines[line_num]) {
+    std::string line(script_lines[line_num]);
+    write(line);
+    flush();
+    std::string ack = serial_->readline(max_line_length, eol);
+    ROS_DEBUG_STREAM_NAMED("serial", "RX: " << ack);
+    if (ack != "+\r") return false;
+    line_num++;
+  }
+  return true;
+}
 
 }  // namespace roboteq
