@@ -1,8 +1,8 @@
 /**
 Software License Agreement (BSD)
 
-\file      exceptions.h
-\authors   Mike Irvine <mirvine@clearpathrobotics.com>
+\file      channel.h
+\authors   Mike Purvis <mpurvis@clearpathrobotics.com>
 \copyright Copyright (c) 2013, Clearpath Robotics, Inc., All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
@@ -22,20 +22,38 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSE
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-#ifndef ROBOTEQ_EXCEPTIONS
-#define ROBOTEQ_EXCEPTIONS
+#ifndef ROBOTEQ_CHANNEL
+#define ROBOTEQ_CHANNEL
 
-#include <exception>
+#include "ros/ros.h"
+
+namespace roboteq_msgs {
+  ROS_DECLARE_MESSAGE(Command);
+  ROS_DECLARE_MESSAGE(Feedback);
+}
 
 namespace roboteq {
 
-class NoHandler : public std::exception {
-};
+class Controller;
 
-class BadConnection : public std::exception {
-};
+class Channel {
+public:
+  Channel(uint8_t channel_num, std::string ns, Controller* controller);
+  void feedbackCallback(std::vector<std::string>);
 
-class BadTransmission : public std::exception {
+protected:
+  void cmdCallback(const roboteq_msgs::Command&);
+  void timerCallback(const ros::TimerEvent&);
+
+  ros::NodeHandle nh_;
+  boost::shared_ptr<Controller> controller_;
+  uint8_t channel_num_;
+
+  ros::Subscriber sub_cmd_;
+  ros::Publisher pub_feedback_;
+  ros::Timer timer_init_;
+
+  ros::Time last_feedback_time_;
 };
 
 }

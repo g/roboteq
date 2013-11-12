@@ -21,9 +21,4 @@ uint8 STATUS_MICROBASIC_SCRIPT_RUNNING=128
 uint8 status
 
 # All temperatures reported in degrees C.
-float32[] motor_temperature
-float32[] channel_temperature
 float32 ic_temperature
-
-# Number of digital inputs varies between controllers.
-uint16 digital_inputs

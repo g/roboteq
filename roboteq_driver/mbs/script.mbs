@@ -1,4 +1,4 @@
-SCRIPT_VER=1
+SCRIPT_VER=2
 MAX_CHANNELS=2
 
 ' Motor controller configuration. Much of this is particular to Grizzly
@@ -10,8 +10,8 @@ setconfig(_ECHOF, 1) ' Serial echo off (p195)
 setconfig(_RWD, 110) ' Watchdog timeout, milliseconds (p195)
 
 ' Undervoltage/overvoltage limits (p214)
-setconfig(_OVL, 60)
-setconfig(_UVL, 46)
+setconfig(_OVL, 600)
+setconfig(_UVL, 460)
 
 ' Encoder config (p208)
 setconfig(_EMOD, 1, 50)
@@ -32,18 +32,17 @@ setconfig(_ICAP, 1, 100)
 setconfig(_CLERD, 1, 0)
 
 top:
-	SetTimerCount(1, 20)
 	for ch = 1 andwhile ch <= MAX_CHANNELS evaluate ch++
 		if getvalue(_BOOL, ch) = 1 then
-			GoSub PrintFeedback  ' 50 Hz
+			GoSub PrintFeedback  ' 25 Hz
 		end if
 	next
 	c++
 	if c = 5 then
-		GoSub PrintStatus  ' 10 Hz
+		GoSub PrintStatus  ' 5 Hz
 		c = 0
 	end if
-	wait(GetTimerCount(1))	
+	wait(35)
 	goto top
 
 PrintFeedback:

@@ -1,8 +1,0 @@
-
-add_library(${PROJECT_NAME}
-  Callbacks Interface
-)
-
-install(TARGETS ${PROJECT_NAME}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-)
