@@ -198,14 +198,11 @@ class RoboteqDiagnostics():
         #Power Input
         self.motor_power = DiagnosticStatus(name=self.motor_desc + " Motor Power", level=DiagnosticStatus.OK, message="OK")
         mot_power = data.motor_power[0]
-        self.motor_power.values = [KeyValue(self.motor_desc + " Motor Power (W)", str(mot_power))]
+        self.motor_power.values = [KeyValue(self.motor_desc + " Motor Power (%)", str(mot_power * 100))]
 
         self.publish_diag(rospy.get_rostime())
 
             
 if __name__ == "__main__":
-    obj = RoboteqDiagnostics()
-    try:
-        rospy.spin()
-    except rospy.ROSInterruptException:
-        pass
+    rd = RoboteqDiagnostics()
+    rospy.spin()
