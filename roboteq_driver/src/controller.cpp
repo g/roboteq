@@ -86,6 +86,7 @@ void Controller::connect() {
 
 void Controller::read() {
   std::string msg = serial_->readline(max_line_length, eol);
+  static bool receiving_script_messages = false;
   if (!msg.empty()) {
     ROS_DEBUG_STREAM_NAMED("serial", "RX: " << msg);
     if (msg[0] == '+' || msg[0] == '-') {
@@ -101,24 +102,28 @@ void Controller::read() {
       } else if (msg[1] == 'f') {
         processFeedback(msg);
       } 
+      receiving_script_messages = true;
     } else {
       // Unknown other message.
       ROS_WARN_STREAM("Unknown serial message received: " << msg);
     }
   } else {
     ROS_WARN_NAMED("serial", "Serial::readline() returned no data.");
-    ROS_DEBUG("No status messages.");
-    if (start_script_attempts_ < 5) {
-      start_script_attempts_++;
-      ROS_DEBUG("Attempt #%d to start MBS program.", start_script_attempts_);
-      startScript();
-      flush();
-    } else {
-      ROS_DEBUG("Attempting to download MBS program.");
-      if (downloadScript()) {
-        start_script_attempts_ = 0;
+    if (!receiving_script_messages) {
+      if (start_script_attempts_ < 5) {
+        start_script_attempts_++;
+        ROS_DEBUG("Attempt #%d to start MBS program.", start_script_attempts_);
+        startScript();
+        flush();
+      } else {
+        ROS_DEBUG("Attempting to download MBS program.");
+        if (downloadScript()) {
+          start_script_attempts_ = 0;
+        }
+        ros::Duration(1.0).sleep(); 
       }
-      ros::Duration(1.0).sleep(); 
+    } else {
+      ROS_DEBUG("Script is believed to be in-place and running, so taking no action.");
     }
   }
 }
@@ -144,9 +149,16 @@ void Controller::processStatus(std::string str) {
   boost::split(fields, str, boost::algorithm::is_any_of(":"));
   try {
     int reported_script_ver = boost::lexical_cast<int>(fields[1]);
-    if (reported_script_ver != script_ver) {
-      ROS_WARN("Script version mismatch.");
-      downloadScript();
+    static int wrong_script_version_count = 0;
+    if (reported_script_ver == script_ver) {
+      wrong_script_version_count = 0;
+    } else {
+      if (++wrong_script_version_count > 5) {
+        ROS_WARN_STREAM("Script version mismatch. Expecting " << script_ver <<
+            " but controller consistently reports " << reported_script_ver << ". " <<
+            ". Now attempting download.");
+        downloadScript();
+      }
       return;
     }
     
