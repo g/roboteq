@@ -38,7 +38,7 @@ class Controller;
 
 class Channel {
 public:
-  Channel(uint8_t channel_num, std::string ns, Controller* controller);
+  Channel(int channel_num, std::string ns, Controller* controller);
   void feedbackCallback(std::vector<std::string>);
 
 protected:
@@ -47,7 +47,7 @@ protected:
 
   ros::NodeHandle nh_;
   boost::shared_ptr<Controller> controller_;
-  uint8_t channel_num_;
+  int channel_num_;
 
   ros::Subscriber sub_cmd_;
   ros::Publisher pub_feedback_;

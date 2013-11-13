@@ -1,4 +1,4 @@
-SCRIPT_VER=2
+SCRIPT_VER=3
 MAX_CHANNELS=2
 
 ' Motor controller configuration. Much of this is particular to Grizzly
@@ -42,7 +42,7 @@ top:
 		GoSub PrintStatus  ' 5 Hz
 		c = 0
 	end if
-	wait(35)
+	wait(20)
 	goto top
 
 PrintFeedback:

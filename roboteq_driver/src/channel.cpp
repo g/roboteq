@@ -9,7 +9,7 @@
 
 namespace roboteq {
 
-Channel::Channel(uint8_t channel_num, std::string ns, Controller* controller) :
+Channel::Channel(int channel_num, std::string ns, Controller* controller) :
   channel_num_(channel_num), nh_(ns), controller_(controller)
 {
   sub_cmd_ = nh_.subscribe("cmd", 1, &Channel::cmdCallback, this);

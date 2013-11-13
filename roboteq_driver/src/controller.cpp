@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Link to generated source from Microbasic script file. 
 extern const char* script_lines[];
-extern const int script_ver = 2;
+extern const int script_ver = 3;
 
 namespace roboteq {
 
@@ -193,7 +193,8 @@ void Controller::processFeedback(std::string msg) {
 bool Controller::downloadScript() {
   ROS_DEBUG("Commanding driver to stop executing script.");
   stopScript(); flush();
-  serial_->readline(max_line_length, eol);  // Swallow ack/nack.
+  ros::Duration(0.5).sleep();
+  serial_->read();  // Clear the buffer.
   
   // Send SLD.
   ROS_DEBUG("Commanding driver to enter download mode.");
@@ -201,10 +202,14 @@ bool Controller::downloadScript() {
 
   // Check special ack from SLD.
   std::string msg = serial_->readline(max_line_length, eol);
-  ROS_DEBUG_STREAM_NAMED("serial", "RX: " << msg);
+  ROS_DEBUG_STREAM_NAMED("serial", "HLD-RX: " << msg);
   if (msg != "HLD\r") {
-    ROS_DEBUG("Could not enter download mode.");
-    return false;
+    std::string msg2 = serial_->readline(max_line_length, eol);
+    ROS_DEBUG_STREAM_NAMED("serial", "HLD-RX: " << msg2);
+    if (msg2 != "HLD\r") {
+      ROS_DEBUG("Could not enter download mode.");
+      return false;
+    }
   }
   
   // Send hex program, line by line, checking for an ack from each line.
@@ -214,7 +219,7 @@ bool Controller::downloadScript() {
     write(line);
     flush();
     std::string ack = serial_->readline(max_line_length, eol);
-    ROS_DEBUG_STREAM_NAMED("serial", "RX: " << ack);
+    ROS_DEBUG_STREAM_NAMED("serial", "ACK-RX: " << ack);
     if (ack != "+\r") return false;
     line_num++;
   }
