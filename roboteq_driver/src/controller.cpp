@@ -39,15 +39,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Link to generated source from Microbasic script file. 
 extern const char* script_lines[];
-extern const int script_ver = 3;
+extern const int script_ver = 5;
 
 namespace roboteq {
 
 const std::string eol("\r");
 const size_t max_line_length(128);
-
-// Roboteq-defined limit
-const int max_setpoint(1000);
 
 Controller::Controller(const char *port, int baud)
   : nh_("~"), port_(port), baud_(baud), connected_(false), version_(""),
@@ -145,11 +142,6 @@ void Controller::processStatus(std::string str) {
 
   std::vector<std::string> fields;
   boost::split(fields, str, boost::algorithm::is_any_of(":"));
-  if (fields.size() != 5) {
-    ROS_WARN("Wrong number of status fields. Dropping message.");
-    return;
-  }
-
   try {
     int reported_script_ver = boost::lexical_cast<int>(fields[1]);
     if (reported_script_ver != script_ver) {
@@ -157,9 +149,15 @@ void Controller::processStatus(std::string str) {
       downloadScript();
       return;
     }
+    
+    if (fields.size() != 7) {
+      ROS_WARN("Wrong number of status fields. Dropping message.");
+      return;
+    }
+
     msg.fault = boost::lexical_cast<int>(fields[2]);
     msg.status = boost::lexical_cast<int>(fields[3]);
-    msg.ic_temperature = boost::lexical_cast<int>(fields[4]);
+    msg.ic_temperature = boost::lexical_cast<int>(fields[6]);
   } catch (std::bad_cast& e) {
     ROS_WARN("Failure parsing status data. Dropping message.");
     return;
@@ -200,17 +198,15 @@ bool Controller::downloadScript() {
   ROS_DEBUG("Commanding driver to enter download mode.");
   write("%SLD 321654987"); flush();
 
-  // Check special ack from SLD.
-  std::string msg = serial_->readline(max_line_length, eol);
-  ROS_DEBUG_STREAM_NAMED("serial", "HLD-RX: " << msg);
-  if (msg != "HLD\r") {
-    std::string msg2 = serial_->readline(max_line_length, eol);
-    ROS_DEBUG_STREAM_NAMED("serial", "HLD-RX: " << msg2);
-    if (msg2 != "HLD\r") {
-      ROS_DEBUG("Could not enter download mode.");
-      return false;
-    }
+  // Look for special ack from SLD.
+  for (int find_ack = 0; find_ack < 7; find_ack++) {
+    std::string msg = serial_->readline(max_line_length, eol);
+    ROS_DEBUG_STREAM_NAMED("serial", "HLD-RX: " << msg); 
+    if (msg == "HLD\r") goto found_ack;
   }
+  ROS_DEBUG("Could not enter download mode.");
+  return false;
+  found_ack:
   
   // Send hex program, line by line, checking for an ack from each line.
   int line_num = 0;

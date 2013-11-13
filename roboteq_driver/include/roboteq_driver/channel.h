@@ -48,6 +48,7 @@ protected:
   ros::NodeHandle nh_;
   boost::shared_ptr<Controller> controller_;
   int channel_num_;
+  float max_rpm_;
 
   ros::Subscriber sub_cmd_;
   ros::Publisher pub_feedback_;

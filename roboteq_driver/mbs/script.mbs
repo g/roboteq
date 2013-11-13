@@ -1,4 +1,4 @@
-SCRIPT_VER=3
+SCRIPT_VER=5
 MAX_CHANNELS=2
 
 ' Motor controller configuration. Much of this is particular to Grizzly
@@ -13,9 +13,10 @@ setconfig(_RWD, 110) ' Watchdog timeout, milliseconds (p195)
 setconfig(_OVL, 600)
 setconfig(_UVL, 460)
 
-' Encoder config (p208)
+' Encoder, speed config (p208, p221)
 setconfig(_EMOD, 1, 50)
 setconfig(_EPPR, 1, 1024)
+setconfig(_MXRPM, 1, 3500)
 
 ' Current limit (p216)
 setconfig(_ALIM, 1, 1500)
@@ -52,7 +53,7 @@ PrintFeedback:
 	print(":", getvalue(_MOTPWR, ch))
 	print(":", getvalue(_ABSPEED, ch))
 	print(":", getvalue(_ABCNTR, ch))
-	print(":", getvalue(_VOLTS, ch))
+	print(":", getvalue(_VOLTS, 2))
 	print(":", getvalue(_BATAMPS, ch))
 	print(":", getvalue(_ANAIN, ch))
 	print(":", getvalue(_TEMP, ch+1))
@@ -63,6 +64,8 @@ PrintStatus:
 	print("&s:", SCRIPT_VER)
 	print(":", getvalue(_FLTFLAG))
 	print(":", getvalue(_STFLAG))
+	print(":", getvalue(_VOLTS, 1))
+	print(":", getvalue(_VOLTS, 3))
 	print(":", getvalue(_TEMP, 1))
 	print("\r")
 	Return

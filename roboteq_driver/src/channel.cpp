@@ -6,11 +6,14 @@
 #include "roboteq_msgs/Feedback.h"
 #include "roboteq_msgs/Command.h"
 
+// Simple conversions between rad/s and RPM.
+#define TO_RPM(x) (double(x) * 60 / (2 * M_PI))
+#define FROM_RPM(x) (double(x) * (2 * M_PI) / 60)
 
 namespace roboteq {
 
 Channel::Channel(int channel_num, std::string ns, Controller* controller) :
-  channel_num_(channel_num), nh_(ns), controller_(controller)
+  channel_num_(channel_num), nh_(ns), controller_(controller), max_rpm_(3500)
 {
   sub_cmd_ = nh_.subscribe("cmd", 1, &Channel::cmdCallback, this);
   pub_feedback_ = nh_.advertise<roboteq_msgs::Feedback>("feedback", 1);
@@ -19,8 +22,15 @@ Channel::Channel(int channel_num, std::string ns, Controller* controller) :
 }
 
 void Channel::cmdCallback(const roboteq_msgs::Command& command) {
-  // TODO: max rpm
-  controller_->command << "G" << channel_num_ << command.commanded_velocity << controller_->send;
+  // First convert the user's command from rad/s to RPM.
+  float commanded_rpm = TO_RPM(command.commanded_velocity);
+
+  // Now get the -1000 .. 1000 command as a proportion of the maximum RPM.
+  int roboteq_command = int((commanded_rpm / max_rpm_) * 1000.0);
+  ROS_DEBUG_STREAM("Sending command value of " << roboteq_command << " to motor driver.");
+
+  // Write the command.
+  controller_->command << "G" << channel_num_ << roboteq_command << controller_->send;
   controller_->flush();
 }
 
@@ -29,13 +39,13 @@ void Channel::feedbackCallback(std::vector<std::string> fields) {
   msg.header.stamp = last_feedback_time_ = ros::Time::now();
 
   try {
-    msg.motor_current = boost::lexical_cast<int>(fields[2]);
-    msg.commanded_velocity = boost::lexical_cast<int>(fields[3]);
-    msg.motor_power = boost::lexical_cast<int>(fields[4]);
-    msg.measured_velocity = boost::lexical_cast<int>(fields[5]);
-    msg.measured_position = boost::lexical_cast<int>(fields[6]);
-    msg.supply_voltage = boost::lexical_cast<int>(fields[7]);
-    msg.supply_current = boost::lexical_cast<int>(fields[8]);
+    msg.motor_current = boost::lexical_cast<float>(fields[2]) / 10;
+    msg.commanded_velocity = FROM_RPM(boost::lexical_cast<double>(fields[3]));
+    msg.motor_power = boost::lexical_cast<float>(fields[4]) / 1000.0;
+    msg.measured_velocity = FROM_RPM(boost::lexical_cast<double>(fields[5]));
+    msg.measured_position = boost::lexical_cast<double>(fields[6]) * 2 * M_PI / 4096;
+    msg.supply_voltage = boost::lexical_cast<float>(fields[7]) / 10.0;
+    msg.supply_current = boost::lexical_cast<float>(fields[8]) / 10.0;
     msg.motor_temperature = boost::lexical_cast<int>(fields[9]);
     msg.channel_temperature = boost::lexical_cast<int>(fields[10]);
   } catch (std::bad_cast& e) {
