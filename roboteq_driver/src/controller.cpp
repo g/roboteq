@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Link to generated source from Microbasic script file. 
 extern const char* script_lines[];
-extern const int script_ver = 5;
+extern const int script_ver = 6;
 
 namespace roboteq {
 
@@ -85,6 +85,7 @@ void Controller::connect() {
 }
 
 void Controller::read() {
+  ROS_DEBUG_STREAM_NAMED("serial", "Bytes waiting: " << serial_->available());
   std::string msg = serial_->readline(max_line_length, eol);
   static bool receiving_script_messages = false;
   if (!msg.empty()) {
