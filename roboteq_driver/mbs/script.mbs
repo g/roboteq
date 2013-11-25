@@ -1,4 +1,4 @@
-SCRIPT_VER=5
+SCRIPT_VER=6
 MAX_CHANNELS=2
 
 ' Motor controller configuration. Much of this is particular to Grizzly
@@ -24,6 +24,10 @@ setconfig(_ATGA, 1, 2000)
 setconfig(_ATGD, 1, 50)
 setconfig(_ATRIG, 1, 0)
 
+' Max acceleration/deceleration (p219)
+setconfig(_MAC, 1, 20000)
+setconfig(_MDEC, 1, 20000)
+
 ' Closed-loop control (p216-218)
 setconfig(_MMOD, 1, 1)
 setconfig(_KP, 1, 20)
@@ -43,7 +47,7 @@ top:
 		GoSub PrintStatus  ' 5 Hz
 		c = 0
 	end if
-	wait(20)
+	wait(19)
 	goto top
 
 PrintFeedback:
