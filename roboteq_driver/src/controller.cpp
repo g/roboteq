@@ -48,7 +48,7 @@ const size_t max_line_length(128);
 
 Controller::Controller(const char *port, int baud)
   : nh_("~"), port_(port), baud_(baud), connected_(false), version_(""),
-    start_script_attempts_(0),
+    start_script_attempts_(0), serial_(NULL),
     command("!", this), query("?", this), param("^", this)
 {
   pub_status_ = nh_.advertise<roboteq_msgs::Status>("status", 1);
@@ -62,15 +62,20 @@ void Controller::addChannel(Channel* channel) {
 }
 
 void Controller::connect() {
-  serial_ = new serial::Serial(port_, baud_);
-
-  serial::Timeout to = serial::Timeout::simpleTimeout(500);
+  if (!serial_) serial_ = new serial::Serial();
+  serial::Timeout to(serial::Timeout::simpleTimeout(500));
   serial_->setTimeout(to);
+  serial_->setPort(port_);
+  serial_->setBaudrate(baud_);
 
   for (int tries = 0; tries < 5; tries++) {
-    query << "FID" << send;
-    setSerialEcho(false);
-    flush();
+    try {
+      serial_->open();
+      query << "FID" << send;
+      setSerialEcho(false);
+      flush();
+    } catch (serial::IOException) {
+    }
 
     if (serial_->isOpen()) {
       connected_ = true;

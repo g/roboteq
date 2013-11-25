@@ -68,7 +68,8 @@ int main(int argc, char **argv) {
       }
       spinner.stop();
     } else {
-      ROS_WARN("Problem connecting to serial device. Trying again in 1s.");
+      ROS_DEBUG("Problem connecting to serial device.");
+      ROS_ERROR_STREAM_ONCE("Problem connecting to port " << port << ". Trying again every 1 second.");
       sleep(1);
     }  
   }
