@@ -165,14 +165,14 @@ class RoboteqDiagnostics():
         self.motor_rpm.values = [KeyValue(self.motor_desc + " rad/s",str(rpm))]
         
         #Supply Volt
-        self.supply_volt = DiagnosticStatus(name=self.motor_desc + " Supply Volts", level=DiagnosticStatus.OK, message="OK")
+        self.supply_volt = DiagnosticStatus(name=self.motor_desc + " Supply Voltage", level=DiagnosticStatus.OK, message="OK")
         volt = data.supply_voltage
-        self.supply_volt.values = [KeyValue(self.motor_desc + " Supply Volts (V)", str(volt))]
+        self.supply_volt.values = [KeyValue(self.motor_desc + " Supply Voltage (V)", str(volt))]
 
         #Supply Current
-        self.supply_volt = DiagnosticStatus(name=self.motor_desc + " Supply Current", level=DiagnosticStatus.OK, message="OK")
+        self.supply_current = DiagnosticStatus(name=self.motor_desc + " Supply Current", level=DiagnosticStatus.OK, message="OK")
         sup_current = data.supply_current
-        self.supply_volt.values = [KeyValue(self.motor_desc + " Supply Current (A)", str(sup_current))]
+        self.supply_current.values = [KeyValue(self.motor_desc + " Supply Current (A)", str(sup_current))]
 
         #Power Input
         self.motor_power = DiagnosticStatus(name=self.motor_desc + " Motor Power", level=DiagnosticStatus.OK, message="OK")
