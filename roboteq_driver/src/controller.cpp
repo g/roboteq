@@ -1,8 +1,9 @@
-/*
+/**
 Software License Agreement (BSD)
 
-\file      Controller.cpp
-\authors   Mike Irvine <mirvine@clearpathrobotics.com>
+\file      controller.cpp
+\authors   Mike Purvis <mpurvis@clearpathrobotics.com>
+           Mike Irvine <mirvine@clearpathrobotics.com>
 \copyright Copyright (c) 2013, Clearpath Robotics, Inc., All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
