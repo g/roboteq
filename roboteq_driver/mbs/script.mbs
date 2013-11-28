@@ -1,4 +1,4 @@
-SCRIPT_VER=6
+SCRIPT_VER=7
 MAX_CHANNELS=2
 
 ' Motor controller configuration. Much of this is particular to Grizzly
@@ -10,8 +10,8 @@ setconfig(_ECHOF, 1) ' Serial echo off (p195)
 setconfig(_RWD, 110) ' Watchdog timeout, milliseconds (p195)
 
 ' Undervoltage/overvoltage limits (p214)
-setconfig(_OVL, 600)
-setconfig(_UVL, 460)
+setconfig(_OVL, 700)
+setconfig(_UVL, 300)
 
 ' Encoder, speed config (p208, p221)
 setconfig(_EMOD, 1, 50)
