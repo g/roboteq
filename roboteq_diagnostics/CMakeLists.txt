@@ -8,6 +8,6 @@ find_package(catkin REQUIRED)
 catkin_package()
 
 install(PROGRAMS
-  nodes/diagnostics_publisher
+  nodes/diagnostic_publisher
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
