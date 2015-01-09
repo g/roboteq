@@ -2,6 +2,9 @@
 Changelog for package roboteq_driver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.1.1 (2013-11-30)
 ------------------
 
