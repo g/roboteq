@@ -34,7 +34,7 @@ IC_OVERTEMP = 50
 class RoboteqDiagnostics():
     def __init__(self):
         rospy.init_node('roboteq_diagnostics')
-        self.diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray) 
+        self.diag_pub = rospy.Publisher('/diagnostics', DiagnosticArray, queue_size=1)
         self.motor_desc = rospy.get_param('~motor_desc', rospy.get_namespace().split("/")[-2])
 
         self.last_diagnostics_time = rospy.get_rostime()
