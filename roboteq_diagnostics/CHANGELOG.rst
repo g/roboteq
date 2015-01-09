@@ -2,8 +2,8 @@
 Changelog for package roboteq_diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.2 (2015-01-09)
+------------------
 * Add queue_size, fixes `#4 <https://github.com/g/roboteq//issues/4>`_
 * Contributors: Mike Purvis
 
