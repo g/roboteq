@@ -82,7 +82,7 @@ void Channel::feedbackCallback(std::vector<std::string> fields) {
 void Channel::timerCallback(const ros::TimerEvent&) {
   if (ros::Time::now() - last_feedback_time_ > ros::Duration(1.0)) {
     // Not receiving feedback, attempt to start it.
-    controller_->setUserBool(1, 1);
+    controller_->setUserBool(channel_num_, 1);
     controller_->flush();
   }
 }
