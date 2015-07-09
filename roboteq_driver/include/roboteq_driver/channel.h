@@ -42,6 +42,42 @@ public:
   void feedbackCallback(std::vector<std::string>);
 
 protected:
+  /**
+   * @param x Angular velocity in radians/s.
+   * @return Angular velocity in RPM.
+   */
+  static double to_rpm(double x)
+  {
+    return x * 60 / (2 * M_PI);
+  }
+
+  /**
+   * @param x Angular velocity in RPM.
+   * @return Angular velocity in rad/s.
+   */
+  static double from_rpm(double x)
+  {
+    return x * (2 * M_PI) / 60;
+  }
+
+  /**
+   * @param x Angular position in radians.
+   * @return Angular position in encoder ticks.
+   */
+  static double to_encoder_ticks(double x)
+  {
+    return x * 4096 / (2 * M_PI);
+  }
+
+  /**
+   * @param x Angular position in encoder ticks.
+   * @return Angular position in radians.
+   */
+  static double from_encoder_ticks(double x)
+  {
+    return x * (2 * M_PI) / 4096;
+  }
+
   void cmdCallback(const roboteq_msgs::Command&);
   void timerCallback(const ros::TimerEvent&);
 
