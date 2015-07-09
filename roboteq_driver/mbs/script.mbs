@@ -1,5 +1,16 @@
-SCRIPT_VER=8
+SCRIPT_VER=23
 MAX_CHANNELS=2
+
+' Mode values are:
+'  0 speed mode
+'  1 position mode
+'  -1 no mode
+' (corresponds to constants in roboteq_msgs/Command)
+Dim last_mode[3] as Integer
+last_mode[1] = -1
+last_mode[2] = -1
+setcommand(_VAR, 1, 0)  ' Speed mode by default
+setcommand(_VAR, 2, -1)  ' Off by default
 
 ' Motor controller configuration. Much of this is particular to Grizzly
 ' and can be generalized/parameterized as the need arises. Page numbers
@@ -13,12 +24,13 @@ setconfig(_AMOD, 2, 1) ' Analog input 2 absolute mode
 
 ' Undervoltage/overvoltage limits (p214)
 setconfig(_OVL, 700)
-setconfig(_UVL, 300)
+setconfig(_UVL, 280)
 
 ' Encoder, speed config (p208, p221)
 setconfig(_EMOD, 1, 50)
 setconfig(_EPPR, 1, 1024)
 setconfig(_MXRPM, 1, 3500)
+setconfig(_CLERD, 1, 0)
 
 ' Current limit (p216)
 setconfig(_ALIM, 1, 1500)
@@ -30,17 +42,29 @@ setconfig(_ATRIG, 1, 0)
 setconfig(_MAC, 1, 20000)
 setconfig(_MDEC, 1, 20000)
 
-' Closed-loop control (p216-218)
-setconfig(_MMOD, 1, 1)
-setconfig(_KP, 1, 20)
-setconfig(_KI, 1, 40)
-setconfig(_KD, 1, 10)
-setconfig(_ICAP, 1, 100)
-setconfig(_CLERD, 1, 0)
-
 top:
 	for ch = 1 andwhile ch <= MAX_CHANNELS evaluate ch++
-		if getvalue(_BOOL, ch) = 1 then
+		if last_mode[ch] <> getvalue(_VAR, ch) then
+			setcommand(_MSTOP, ch)
+			last_mode[ch] = getvalue(_VAR, ch)
+			if getvalue(_VAR, ch) = 0 then
+				setconfig(_MMOD, ch, 1)
+				setconfig(_KP, ch, 20)
+				setconfig(_KI, ch, 40)
+				setconfig(_KD, ch, 10)
+				setconfig(_ICAP, ch, 100)
+			end if
+			if getvalue(_VAR, ch) = 1 then
+				setconfig(_MMOD, ch, 3)
+				setconfig(_KP, ch, 2)
+				setconfig(_KI, ch, 0)
+				setconfig(_KD, ch, 0)
+				setconfig(_ICAP, ch, 0)
+			end if
+		end if
+		
+		' Send feedback if channel is active.
+		if getvalue(_VAR, ch) <> -1 then
 			GoSub PrintFeedback  ' 25 Hz
 		end if
 	next

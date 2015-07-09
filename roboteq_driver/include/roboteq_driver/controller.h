@@ -47,6 +47,7 @@ private :
   const char *port_;
   int baud_;
   bool connected_;
+  bool receiving_script_messages_;
   std::string version_;
   serial::Serial *serial_;
   std::stringstream tx_buffer_;
@@ -57,7 +58,7 @@ private :
 
   void read();
   void write(std::string);
-  
+
   void processStatus(std::string msg);
   void processFeedback(std::string msg);
 
@@ -89,13 +90,13 @@ protected:
       }
       return *this;
     }
- 
-    void operator<<(EOMSend) 
+
+    void operator<<(EOMSend)
     {
       interface_->write(ss.str());
       ss.str("");
     }
-   
+
     private:
     std::string init_;
     Controller* interface_;
@@ -106,7 +107,7 @@ protected:
   MessageSender query;
   MessageSender param;
   EOMSend send, sendVerify;
- 
+
 public :
   Controller (const char *port, int baud);
   ~Controller();
@@ -128,8 +129,7 @@ public :
   void setUserBool(int var, bool val) { command << "B" << var << (val ? 1 : 0) << send; }
   bool downloadScript();
 
-  int setSerialEcho(bool serial_echo) {
-    param << "ECHOF" << (serial_echo ? 0 : 1) << sendVerify; }
+  void setSerialEcho(bool serial_echo) { param << "ECHOF" << (serial_echo ? 0 : 1) << sendVerify; }
 };
 
 }
