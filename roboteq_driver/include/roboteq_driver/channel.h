@@ -91,6 +91,7 @@ protected:
   ros::Timer timer_init_;
 
   ros::Time last_feedback_time_;
+  uint8_t last_mode_;
 };
 
 }

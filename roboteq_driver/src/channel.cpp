@@ -34,7 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace roboteq {
 
 Channel::Channel(int channel_num, std::string ns, Controller* controller) :
-  channel_num_(channel_num), nh_(ns), controller_(controller), max_rpm_(3500)
+  channel_num_(channel_num), nh_(ns), controller_(controller), max_rpm_(3500),
+  last_mode_(255)
 {
   sub_cmd_ = nh_.subscribe("cmd", 1, &Channel::cmdCallback, this);
   pub_feedback_ = nh_.advertise<roboteq_msgs::Feedback>("feedback", 1);
@@ -44,6 +45,11 @@ Channel::Channel(int channel_num, std::string ns, Controller* controller) :
 
 void Channel::cmdCallback(const roboteq_msgs::Command& command)
 {
+  if (command.mode != last_mode_)
+  {
+    controller_->command << "MS" << channel_num_ << controller_->send;
+  }
+
   if (command.mode == roboteq_msgs::Command::MODE_VELOCITY)
   {
     // Get a -1000 .. 1000 command as a proportion of the maximum RPM.
@@ -66,7 +72,9 @@ void Channel::cmdCallback(const roboteq_msgs::Command& command)
   {
     ROS_WARN_STREAM("Command received with unknown mode number, dropping.");
   }
+
   controller_->flush();
+  last_mode_ = command.mode;
 }
 
 void Channel::feedbackCallback(std::vector<std::string> fields)
