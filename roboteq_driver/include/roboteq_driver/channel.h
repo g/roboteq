@@ -27,16 +27,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ros/ros.h"
 
-namespace roboteq_msgs {
-  ROS_DECLARE_MESSAGE(Command);
-  ROS_DECLARE_MESSAGE(Feedback);
+namespace roboteq_msgs
+{
+ROS_DECLARE_MESSAGE(Command);
+ROS_DECLARE_MESSAGE(Feedback);
 }
 
-namespace roboteq {
+namespace roboteq
+{
 
 class Controller;
 
-class Channel {
+class Channel
+{
 public:
   Channel(int channel_num, std::string ns, Controller* controller);
   void feedbackCallback(std::vector<std::string>);

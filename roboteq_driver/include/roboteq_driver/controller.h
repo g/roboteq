@@ -32,15 +32,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdint.h>
 #include <string>
 
-namespace serial {
-  class Serial;
+namespace serial
+{
+class Serial;
 }
 
-namespace roboteq {
+namespace roboteq
+{
 
 class Channel;
 
-class Controller {
+class Controller
+{
   friend class Channel;
 
 private :
@@ -68,23 +71,31 @@ protected:
   std::string last_response_;
   boost::mutex last_response_mutex_;
   boost::condition_variable last_response_available_;
-  bool haveLastResponse() { return !last_response_.empty(); }
+  bool haveLastResponse()
+  {
+    return !last_response_.empty();
+  }
 
   // These track our progress in attempting to initialize the controller.
   uint8_t start_script_attempts_;
 
   class EOMSend {};
 
-  class MessageSender {
-    public:
+  class MessageSender
+  {
+  public:
     MessageSender(std::string init, Controller* interface)
-        : init_(init), interface_(interface) {}
+      : init_(init), interface_(interface) {}
 
     template<typename T>
-    MessageSender& operator<<(const T val) {
-      if (ss.tellp() == 0) {
+    MessageSender& operator<<(const T val)
+    {
+      if (ss.tellp() == 0)
+      {
         ss << init_ << val;
-      } else {
+      }
+      else
+      {
         ss << ' ' << val;
       }
       return *this;
@@ -96,7 +107,7 @@ protected:
       ss.str("");
     }
 
-    private:
+  private:
     std::string init_;
     Controller* interface_;
     std::stringstream ss;
@@ -108,27 +119,60 @@ protected:
   EOMSend send, sendVerify;
 
 public :
-  Controller (const char *port, int baud);
+  Controller(const char *port, int baud);
   ~Controller();
 
   void addChannel(Channel* channel);
   void connect();
-  bool connected() { return connected_; }
-  void spinOnce() { read(); }
+  bool connected()
+  {
+    return connected_;
+  }
+  void spinOnce()
+  {
+    read();
+  }
   void flush();
 
   // Send commands to motor driver.
-  void setEstop() { command << "EX" << send; }
-  void resetEstop() { command << "MG" << send; }
-  void resetDIOx(int i) { command << "D0" << i << send; }
-  void setDIOx(int i) { command << "D1" << i << send; }
-  void startScript() { command << "R" << send; }
-  void stopScript() { command << "R" << 0 << send; }
-  void setUserVariable(int var, int val) { command << "VAR" << var << val << send; }
-  void setUserBool(int var, bool val) { command << "B" << var << (val ? 1 : 0) << send; }
+  void setEstop()
+  {
+    command << "EX" << send;
+  }
+  void resetEstop()
+  {
+    command << "MG" << send;
+  }
+  void resetDIOx(int i)
+  {
+    command << "D0" << i << send;
+  }
+  void setDIOx(int i)
+  {
+    command << "D1" << i << send;
+  }
+  void startScript()
+  {
+    command << "R" << send;
+  }
+  void stopScript()
+  {
+    command << "R" << 0 << send;
+  }
+  void setUserVariable(int var, int val)
+  {
+    command << "VAR" << var << val << send;
+  }
+  void setUserBool(int var, bool val)
+  {
+    command << "B" << var << (val ? 1 : 0) << send;
+  }
   bool downloadScript();
 
-  void setSerialEcho(bool serial_echo) { param << "ECHOF" << (serial_echo ? 0 : 1) << sendVerify; }
+  void setSerialEcho(bool serial_echo)
+  {
+    param << "ECHOF" << (serial_echo ? 0 : 1) << sendVerify;
+  }
 };
 
 }

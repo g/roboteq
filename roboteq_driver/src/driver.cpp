@@ -29,7 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ros/ros.h"
 
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   ros::init(argc, argv, "~");
   ros::NodeHandle nh("~");
 
@@ -42,36 +43,44 @@ int main(int argc, char **argv) {
   roboteq::Controller controller(port.c_str(), baud);
 
   // Setup channels.
-  if (nh.hasParam("channels")) {
+  if (nh.hasParam("channels"))
+  {
     XmlRpc::XmlRpcValue channel_namespaces;
     nh.getParam("channels", channel_namespaces);
     ROS_ASSERT(channel_namespaces.getType() == XmlRpc::XmlRpcValue::TypeArray);
-    for (int i = 0; i < channel_namespaces.size(); ++i) 
+    for (int i = 0; i < channel_namespaces.size(); ++i)
     {
       ROS_ASSERT(channel_namespaces[i].getType() == XmlRpc::XmlRpcValue::TypeString);
       controller.addChannel(new roboteq::Channel(1 + i, channel_namespaces[i], &controller));
     }
-  } else {
+  }
+  else
+  {
     // Default configuration is a single channel in the node's namespace.
     controller.addChannel(new roboteq::Channel(1, "~", &controller));
-  } 
+  }
 
   // Attempt to connect and run.
-  while (ros::ok()) {
+  while (ros::ok())
+  {
     ROS_DEBUG("Attempting connection to %s at %i baud.", port.c_str(), baud);
     controller.connect();
-    if (controller.connected()) {
+    if (controller.connected())
+    {
       ros::AsyncSpinner spinner(1);
       spinner.start();
-      while (ros::ok()) {
+      while (ros::ok())
+      {
         controller.spinOnce();
       }
       spinner.stop();
-    } else {
+    }
+    else
+    {
       ROS_DEBUG("Problem connecting to serial device.");
       ROS_ERROR_STREAM_ONCE("Problem connecting to port " << port << ". Trying again every 1 second.");
       sleep(1);
-    }  
+    }
   }
 
   return 0;

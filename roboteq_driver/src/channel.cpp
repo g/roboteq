@@ -31,7 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "roboteq_msgs/Command.h"
 
 
-namespace roboteq {
+namespace roboteq
+{
 
 Channel::Channel(int channel_num, std::string ns, Controller* controller) :
   channel_num_(channel_num), nh_(ns), controller_(controller), max_rpm_(3500),
