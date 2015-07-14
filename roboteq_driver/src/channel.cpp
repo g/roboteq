@@ -25,10 +25,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "roboteq_driver/channel.h"
 #include "roboteq_driver/controller.h"
-
-#include "ros/ros.h"
 #include "roboteq_msgs/Feedback.h"
 #include "roboteq_msgs/Command.h"
+#include "ros/ros.h"
+
+#include <string>
+#include <vector>
 
 
 namespace roboteq
@@ -54,7 +56,7 @@ void Channel::cmdCallback(const roboteq_msgs::Command& command)
   if (command.mode == roboteq_msgs::Command::MODE_VELOCITY)
   {
     // Get a -1000 .. 1000 command as a proportion of the maximum RPM.
-    int roboteq_velocity = int((to_rpm(command.setpoint) / max_rpm_) * 1000.0);
+    int roboteq_velocity = static_cast<int>((to_rpm(command.setpoint) / max_rpm_) * 1000.0);
     ROS_DEBUG_STREAM("Commanding " << roboteq_velocity << " velocity to motor driver.");
 
     // Write command to the motor driver.
@@ -115,4 +117,4 @@ void Channel::timerCallback(const ros::TimerEvent&)
   }
 }
 
-}
+}  // namespace roboteq

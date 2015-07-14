@@ -25,7 +25,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "roboteq_driver/controller.h"
 #include "roboteq_driver/channel.h"
-
 #include "roboteq_msgs/Status.h"
 #include "serial/serial.h"
 
@@ -34,9 +33,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
-#include <unistd.h>
+
 #include <iostream>
 #include <sstream>
+#include <string>
+#include <unistd.h>
+#include <vector>
 
 // Link to generated source from Microbasic script file.
 extern const char* script_lines[];

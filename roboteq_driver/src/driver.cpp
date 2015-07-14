@@ -25,8 +25,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #include "roboteq_driver/controller.h"
 #include "roboteq_driver/channel.h"
-
 #include "ros/ros.h"
+
+#include <string>
 
 
 int main(int argc, char **argv)
