@@ -61,6 +61,9 @@ protected:
   }
 
   /**
+   * Conversion of radians to encoder ticks. Note that this assumes a
+   * 1024-line quadrature encoder (hence 4096).
+   *
    * @param x Angular position in radians.
    * @return Angular position in encoder ticks.
    */
@@ -70,6 +73,9 @@ protected:
   }
 
   /**
+   * Conversion of encoder ticks to radians. Note that this assumes a
+   * 1024-line quadrature encoder (hence 4096).
+   *
    * @param x Angular position in encoder ticks.
    * @return Angular position in radians.
    */
