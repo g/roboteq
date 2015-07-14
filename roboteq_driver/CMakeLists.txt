@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(roboteq_driver)
 
-find_package(catkin REQUIRED COMPONENTS roboteq_msgs roscpp serial)
+find_package(catkin REQUIRED COMPONENTS roboteq_msgs roscpp roslint serial)
 
 catkin_package()
 
@@ -15,3 +15,7 @@ install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
+if (CATKIN_ENABLE_TESTING)
+  roslint_cpp()
+  roslint_add_test()
+endif()

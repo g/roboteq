@@ -1,20 +1,21 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>roboteq_driver</name>
   <version>0.1.2</version>
-  <description>The roboteq_driver package</description>
+  <description>
+    The roboteq_driver package provides a ROS interface to Roboteq single- and
+    dual-channel motor drivers controlled using RS232 or USB.
+  </description>
 
   <maintainer email="mpurvis@clearpathrobotics.com">Mike Purvis</maintainer>
 
   <license>BSD</license>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>roboteq_msgs</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>serial</build_depend>
-  <run_depend>roboteq_msgs</run_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>serial</run_depend>
+  <build_depend>roslint</build_depend>
+  <depend>roboteq_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>serial</depend>
 
   <export>
   </export>
