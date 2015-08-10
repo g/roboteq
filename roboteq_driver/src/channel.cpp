@@ -48,6 +48,17 @@ void Channel::cmdCallback(const roboteq_msgs::Command& command)
   if (command.mode != last_mode_)
   {
     controller_->command << "MS" << channel_num_ << controller_->send;
+
+    if (command.mode == roboteq_msgs::Command::MODE_VELOCITY)
+    {
+      ROS_DEBUG_STREAM("Commanding velocity mode.");
+      controller_->param << "MMOD" << channel_num_ << 1 << controller_->send;
+    }
+    else
+    {
+      ROS_DEBUG_STREAM("Commanding position mode.");
+      controller_->param << "MMOD" << channel_num_ << 3 << controller_->send;
+    }
   }
 
   if (command.mode == roboteq_msgs::Command::MODE_VELOCITY)

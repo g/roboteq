@@ -1,4 +1,4 @@
-SCRIPT_VER=8
+SCRIPT_VER=11
 MAX_CHANNELS=2
 
 ' Motor controller configuration. Much of this is particular to Grizzly
@@ -13,7 +13,7 @@ setconfig(_AMOD, 2, 1) ' Analog input 2 absolute mode
 
 ' Undervoltage/overvoltage limits (p214)
 setconfig(_OVL, 700)
-setconfig(_UVL, 300)
+setconfig(_UVL, 280)
 
 ' Encoder, speed config (p208, p221)
 setconfig(_EMOD, 1, 50)
@@ -31,7 +31,6 @@ setconfig(_MAC, 1, 20000)
 setconfig(_MDEC, 1, 20000)
 
 ' Closed-loop control (p216-218)
-setconfig(_MMOD, 1, 1)
 setconfig(_KP, 1, 20)
 setconfig(_KI, 1, 40)
 setconfig(_KD, 1, 10)
