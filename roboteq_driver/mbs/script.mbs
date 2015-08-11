@@ -1,5 +1,6 @@
-SCRIPT_VER=16
+SCRIPT_VER=17
 MAX_CHANNELS=2
+Dim last_mode[2] as Integer
 
 ' Motor controller configuration. Much of this is particular to Grizzly
 ' and can be generalized/parameterized as the need arises. Page numbers
@@ -15,30 +16,51 @@ setconfig(_AMOD, 2, 1) ' Analog input 2 absolute mode
 setconfig(_OVL, 700)
 setconfig(_UVL, 280)
 
-' Encoder, speed config (p208, p221)
-setconfig(_EMOD, 1, 50)
-setconfig(_EPPR, 1, 1024)
-setconfig(_MXRPM, 1, 3500)
-
-' Current limit (p216)
-setconfig(_ALIM, 1, 1500)
-setconfig(_ATGA, 1, 2000)
-setconfig(_ATGD, 1, 50)
-setconfig(_ATRIG, 1, 0)
-
-' Max acceleration/deceleration (p219)
-setconfig(_MAC, 1, 20000)
-setconfig(_MDEC, 1, 20000)
-
-' Closed-loop control (p216-218)
-setconfig(_KP, 1, 10)
-setconfig(_KI, 1, 0)
-setconfig(_KD, 1, 10)
-setconfig(_ICAP, 1, 100)
-setconfig(_CLERD, 1, 0)
+' Per-channel configuration
+for ch = 1 andwhile ch <= MAX_CHANNELS evaluate ch++
+	' Encoder, speed config (p208, p221)
+	setconfig(_EMOD, ch, 50)
+	setconfig(_EPPR, ch, 1024)
+	setconfig(_MXRPM, ch, 3500)
+	
+	' Current limit (p216)
+	setconfig(_ALIM, ch, 1500)
+	setconfig(_ATGA, ch, 2000)
+	setconfig(_ATGD, ch, 50)
+	setconfig(_ATRIG, ch, 0)
+	
+	' Max acceleration/deceleration (p219)
+	setconfig(_MAC, ch, 20000)
+	setconfig(_MDEC, ch, 20000)
+	
+	' No encoder fault detection
+	setconfig(_CLERD, ch, 0)
+	
+	' Set speed mode with no last_mode, so that initialization is triggered.
+	last_mode[ch] = 255
+	setcommand(_VAR, ch, 0)
+next
 
 top:
 	for ch = 1 andwhile ch <= MAX_CHANNELS evaluate ch++
+		if last_mode[ch] <> getvalue(_VAR, ch) then
+			last_mode[ch] = getvalue(_VAR, ch)
+			if getvalue(_VAR, ch) = 0 then
+				setconfig(_MMOD, ch, 1)
+				setconfig(_KP, ch, 20)
+				setconfig(_KI, ch, 40)
+				setconfig(_KD, ch, 10)
+				setconfig(_ICAP, ch, 100)
+			end if
+			if getvalue(_VAR, ch) = 1 then
+				setconfig(_MMOD, ch, 3)
+				setconfig(_KP, ch, 4)
+				setconfig(_KI, ch, 2)
+				setconfig(_KD, ch, 0)
+				setconfig(_ICAP, ch, 10)
+			end if
+		end if
+		
 		if getvalue(_BOOL, ch) = 1 then
 			GoSub PrintFeedback  ' 25 Hz
 		end if

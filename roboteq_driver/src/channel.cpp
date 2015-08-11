@@ -45,29 +45,18 @@ Channel::Channel(int channel_num, std::string ns, Controller* controller) :
 
 void Channel::cmdCallback(const roboteq_msgs::Command& command)
 {
-  if (command.mode != last_mode_)
-  {
-    controller_->command << "MS" << channel_num_ << controller_->send;
-
-    if (command.mode == roboteq_msgs::Command::MODE_VELOCITY)
-    {
-      ROS_DEBUG_STREAM("Commanding velocity mode.");
-      controller_->param << "MMOD" << channel_num_ << 1 << controller_->send;
-    }
-    else
-    {
-      ROS_DEBUG_STREAM("Commanding position mode.");
-      controller_->param << "MMOD" << channel_num_ << 3 << controller_->send;
-    }
-  }
+  // Update mode of motor driver. We send this on each command for redundancy against a
+  // lost message, and the MBS script keeps track of changes and updates the control
+  // constants accordingly.
+  controller_->command << "VAR" << channel_num_ << command.mode << controller_->send;
 
   if (command.mode == roboteq_msgs::Command::MODE_VELOCITY)
   {
     // Get a -1000 .. 1000 command as a proportion of the maximum RPM.
-    int roboteq_velocity = int((to_rpm(command.setpoint) / max_rpm_) * 1000.0);
+    int roboteq_velocity = to_rpm(command.setpoint) / max_rpm_ * 1000.0;
     ROS_DEBUG_STREAM("Commanding " << roboteq_velocity << " velocity to motor driver.");
 
-    // Write command to the motor driver.
+    // Write mode and command to the motor driver.
     controller_->command << "G" << channel_num_ << roboteq_velocity << controller_->send;
   }
   else if (command.mode == roboteq_msgs::Command::MODE_POSITION)
