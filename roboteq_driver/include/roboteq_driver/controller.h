@@ -47,6 +47,7 @@ private :
   const char *port_;
   int baud_;
   bool connected_;
+  bool receiving_script_messages_;
   std::string version_;
   serial::Serial *serial_;
   std::stringstream tx_buffer_;

@@ -39,8 +39,6 @@ Channel::Channel(int channel_num, std::string ns, Controller* controller) :
 {
   sub_cmd_ = nh_.subscribe("cmd", 1, &Channel::cmdCallback, this);
   pub_feedback_ = nh_.advertise<roboteq_msgs::Feedback>("feedback", 1);
-
-  timer_init_ = nh_.createTimer(ros::Duration(1.0), &Channel::timerCallback, this);
 }
 
 void Channel::cmdCallback(const roboteq_msgs::Command& command)
@@ -48,7 +46,7 @@ void Channel::cmdCallback(const roboteq_msgs::Command& command)
   // Update mode of motor driver. We send this on each command for redundancy against a
   // lost message, and the MBS script keeps track of changes and updates the control
   // constants accordingly.
-  controller_->command << "VAR" << channel_num_ << command.mode << controller_->send;
+  controller_->command << "VAR" << channel_num_ << static_cast<int>(command.mode) << controller_->send;
 
   if (command.mode == roboteq_msgs::Command::MODE_VELOCITY)
   {
@@ -102,16 +100,6 @@ void Channel::feedbackCallback(std::vector<std::string> fields)
     return;
   }
   pub_feedback_.publish(msg);
-}
-
-void Channel::timerCallback(const ros::TimerEvent&)
-{
-  if (ros::Time::now() - last_feedback_time_ > ros::Duration(1.0))
-  {
-    // Not receiving feedback, attempt to start it.
-    controller_->setUserBool(channel_num_, 1);
-    controller_->flush();
-  }
 }
 
 }

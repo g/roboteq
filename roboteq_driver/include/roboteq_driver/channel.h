@@ -85,7 +85,6 @@ protected:
   }
 
   void cmdCallback(const roboteq_msgs::Command&);
-  void timerCallback(const ros::TimerEvent&);
 
   ros::NodeHandle nh_;
   boost::shared_ptr<Controller> controller_;
@@ -94,7 +93,6 @@ protected:
 
   ros::Subscriber sub_cmd_;
   ros::Publisher pub_feedback_;
-  ros::Timer timer_init_;
 
   ros::Time last_feedback_time_;
   uint8_t last_mode_;
