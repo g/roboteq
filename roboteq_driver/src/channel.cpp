@@ -39,10 +39,19 @@ Channel::Channel(int channel_num, std::string ns, Controller* controller) :
 {
   sub_cmd_ = nh_.subscribe("cmd", 1, &Channel::cmdCallback, this);
   pub_feedback_ = nh_.advertise<roboteq_msgs::Feedback>("feedback", 1);
+
+  // Don't start this timer until we've received the first motion command, otherwise it
+  // can interfere with code download on device startup.
+  timeout_timer_ = nh_.createTimer(ros::Duration(0.1), &Channel::timeoutCallback, this);
+  timeout_timer_.stop();
 }
 
 void Channel::cmdCallback(const roboteq_msgs::Command& command)
 {
+  // Reset command timeout.
+  timeout_timer_.stop();
+  timeout_timer_.start();
+
   // Update mode of motor driver. We send this on each command for redundancy against a
   // lost message, and the MBS script keeps track of changes and updates the control
   // constants accordingly.
@@ -73,6 +82,15 @@ void Channel::cmdCallback(const roboteq_msgs::Command& command)
 
   controller_->flush();
   last_mode_ = command.mode;
+}
+
+void Channel::timeoutCallback(const ros::TimerEvent&)
+{
+  // Sends stop command repeatedly at 10Hz when not being otherwise commanded. Sending
+  // repeatedly is a hedge against a lost serial message.
+  ROS_DEBUG("Commanding motor to stop due to user command timeout.");
+  controller_->command << "MS" << channel_num_ << controller_->send;
+  controller_->flush();
 }
 
 void Channel::feedbackCallback(std::vector<std::string> fields)
