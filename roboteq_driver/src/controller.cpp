@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Link to generated source from Microbasic script file.
 extern const char* script_lines[];
-extern const int script_ver = 23;
+extern const int script_ver = 28;
 
 namespace roboteq {
 

@@ -89,7 +89,7 @@ void Channel::timeoutCallback(const ros::TimerEvent&)
   // Sends stop command repeatedly at 10Hz when not being otherwise commanded. Sending
   // repeatedly is a hedge against a lost serial message.
   ROS_DEBUG("Commanding motor to stop due to user command timeout.");
-  controller_->command << "MS" << channel_num_ << controller_->send;
+  controller_->command << "VAR" << channel_num_ << static_cast<int>(roboteq_msgs::Command::MODE_STOPPED) << controller_->send;
   controller_->flush();
 }
 
