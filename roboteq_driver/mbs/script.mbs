@@ -1,5 +1,15 @@
-SCRIPT_VER=8
-MAX_CHANNELS=2
+SCRIPT_VER=28
+MAX_CHANNELS=1
+Dim last_mode[2] as Integer
+
+' Mode values are:
+'  -1 stopped
+'  0 speed mode
+'  1 position mode
+' These correspond to the constants in roboteq_msgs/Command. The motor begins in stopped
+' mode, the setup for which is run when last_mode[0] != VAR[1].
+last_mode[0] = -127
+setcommand(_VAR, 1, -1)
 
 ' Motor controller configuration. Much of this is particular to Grizzly
 ' and can be generalized/parameterized as the need arises. Page numbers
@@ -13,42 +23,71 @@ setconfig(_AMOD, 2, 1) ' Analog input 2 absolute mode
 
 ' Undervoltage/overvoltage limits (p214)
 setconfig(_OVL, 700)
-setconfig(_UVL, 300)
+setconfig(_UVL, 280)
 
-' Encoder, speed config (p208, p221)
-setconfig(_EMOD, 1, 50)
-setconfig(_EPPR, 1, 1024)
-setconfig(_MXRPM, 1, 3500)
+for ch = 1 andwhile ch <= MAX_CHANNELS evaluate ch++
+	' Encoder, speed config (p208, p221)
+	setconfig(_EMOD, ch, 50)
+	setconfig(_EPPR, ch, 1024)
+	setconfig(_MXRPM, ch, 3500)
+	setconfig(_CLERD, ch, 0)
 
-' Current limit (p216)
-setconfig(_ALIM, 1, 1500)
-setconfig(_ATGA, 1, 2000)
-setconfig(_ATGD, 1, 50)
-setconfig(_ATRIG, 1, 0)
+	' Current limit (p216)
+	setconfig(_ALIM, ch, 1500)
+	setconfig(_ATGA, ch, 2000)
+	setconfig(_ATGD, ch, 50)
+	setconfig(_ATRIG, ch, 0)
 
-' Max acceleration/deceleration (p219)
-setconfig(_MAC, 1, 20000)
-setconfig(_MDEC, 1, 20000)
-
-' Closed-loop control (p216-218)
-setconfig(_MMOD, 1, 1)
-setconfig(_KP, 1, 20)
-setconfig(_KI, 1, 40)
-setconfig(_KD, 1, 10)
-setconfig(_ICAP, 1, 100)
-setconfig(_CLERD, 1, 0)
+	' Max acceleration/deceleration (p219)
+	setconfig(_MAC, ch, 20000)
+	setconfig(_MDEC, ch, 20000)
+next
 
 top:
 	for ch = 1 andwhile ch <= MAX_CHANNELS evaluate ch++
-		if getvalue(_BOOL, ch) = 1 then
-			GoSub PrintFeedback  ' 25 Hz
+		if last_mode[ch - 1] <> getvalue(_VAR, ch) then
+			last_mode[ch - 1] = getvalue(_VAR, ch)
+
+			' Motor to be stopped (high-Z).
+			if getvalue(_VAR, ch) = -1 then
+				setconfig(_MMOD, ch, 1)
+				setconfig(_KP, ch, 0)
+				setconfig(_KI, ch, 0)
+				setconfig(_KD, ch, 0)
+				setconfig(_ICAP, ch, 0)
+				setcommand(_G, ch, 0)
+			end if
+
+			' Motor in velocity-control mode.
+			if getvalue(_VAR, ch) = 0 then
+				setconfig(_MMOD, ch, 1)
+				setconfig(_KP, ch, 20)
+				setconfig(_KI, ch, 40)
+				setconfig(_KD, ch, 10)
+				setconfig(_ICAP, ch, 100)
+			end if
+
+			' Motor in position-control mode.
+			if getvalue(_VAR, ch) = 1 then
+				setconfig(_MMOD, ch, 3)
+				setconfig(_KP, ch, 2)
+				setconfig(_KI, ch, 0)
+				setconfig(_KD, ch, 0)
+				setconfig(_ICAP, ch, 0)
+			end if
 		end if
+		
+		' Send feedback for this channel at 25Hz.
+		GoSub PrintFeedback
 	next
+
+	' Send status messages for the controller at 5Hz.
 	c++
 	if c = 5 then
-		GoSub PrintStatus  ' 5 Hz
+		GoSub PrintStatus
 		c = 0
 	end if
+
 	wait(19)
 	goto top
 
