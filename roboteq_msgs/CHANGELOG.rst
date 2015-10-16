@@ -2,6 +2,11 @@
 Changelog for package roboteq_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add mode for stop, clear control constants; this is an MD5 breakage for Indigo.
+* Contributors: Mike Purvis
+
 0.1.2 (2015-01-09)
 ------------------
 
