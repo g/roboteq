@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>roboteq_diagnostics</name>
-  <version>0.1.2</version>
+  <version>0.2.0</version>
   <description>
     Republish basic Roboteq motor controller data to the standard ROS
     diagnostics topic.

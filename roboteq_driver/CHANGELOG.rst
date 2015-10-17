@@ -2,8 +2,8 @@
 Changelog for package roboteq_driver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.0 (2015-10-16)
+------------------
 * Explicit stop commands at 10Hz when uncommanded.
 * Add option to command position control, specifying separate sets of constants in MBS.
 * Fixed channel.cpp line 85 to properly pass variable relevent to channel
